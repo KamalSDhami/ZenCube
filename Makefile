@@ -5,17 +5,24 @@ CC = gcc
 CFLAGS = -Wall -Wextra -std=c99
 LDFLAGS = -lrt
 TARGET = sandbox
+TARGET_V2 = sandbox_v2
 SOURCE = sandbox.c
+SOURCE_V2 = sandbox_v2.c
 DEBUG_FLAGS = -g -DDEBUG
 RELEASE_FLAGS = -O2 -DNDEBUG
 
-# Default target
-all: $(TARGET)
+# Default target - build both versions
+all: $(TARGET) $(TARGET_V2)
 
 # Build sandbox with standard flags
 $(TARGET): $(SOURCE)
 	$(CC) $(CFLAGS) -o $(TARGET) $(SOURCE) $(LDFLAGS)
-	@echo "✅ Sandbox compiled successfully"
+	@echo "✅ Sandbox (v1) compiled successfully"
+
+# Build enhanced sandbox with resource limits
+$(TARGET_V2): $(SOURCE_V2)
+	$(CC) $(CFLAGS) -o $(TARGET_V2) $(SOURCE_V2) $(LDFLAGS)
+	@echo "✅ Sandbox v2 (enhanced) compiled successfully"
 
 # Debug build with debugging symbols and debug output
 debug: $(SOURCE)
@@ -35,7 +42,7 @@ test: $(TARGET)
 
 # Clean build artifacts
 clean:
-	rm -f $(TARGET)
+	rm -f $(TARGET) $(TARGET_V2)
 	@echo "✅ Cleaned build artifacts"
 
 # Install to system (requires sudo)
