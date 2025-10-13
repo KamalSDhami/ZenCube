@@ -1027,7 +1027,9 @@ class ZenCubeModernGUI(QMainWindow):
         else:
             color = "#00ff00"
         
-        cursor.insertHtml(f'<span style="color: {color};">{message.replace("<", "&lt;").replace(">", "&gt;")}</span>')
+        # Convert newlines to HTML breaks and escape HTML characters
+        html_message = message.replace("<", "&lt;").replace(">", "&gt;").replace("\n", "<br>")
+        cursor.insertHtml(f'<span style="color: {color};">{html_message}</span>')
         self.output_text.setTextCursor(cursor)
         self.output_text.ensureCursorVisible()
     
