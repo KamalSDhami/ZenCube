@@ -63,17 +63,31 @@ class ZenCubeGUI:
     
     def detect_sandbox_path(self):
         """Detect the sandbox binary path"""
+        # Get the directory where the GUI script is located
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        
         possible_paths = [
-            "./sandbox",
-            "./zencube/sandbox",
-            "../zencube/sandbox",
-            os.path.join(os.path.dirname(__file__), "sandbox")
+            "./sandbox",                                      # Current directory
+            os.path.join(script_dir, "sandbox"),             # Same dir as script
+            "./zencube/sandbox",                             # Subdirectory
+            "../sandbox",                                     # Parent directory
+            os.path.join(script_dir, "..", "sandbox"),       # Parent of script dir
+            "/usr/local/bin/sandbox",                        # System install
+            os.path.expanduser("~/zencube/sandbox")          # User home
         ]
         
         for path in possible_paths:
-            if os.path.exists(path):
-                return path
+            full_path = os.path.abspath(path)
+            if os.path.exists(full_path) and os.path.isfile(full_path):
+                # Check if file is executable (Linux/Unix)
+                import platform
+                if platform.system() != "Windows":
+                    if os.access(full_path, os.X_OK):
+                        return path
+                else:
+                    return path
         
+        # If not found, return default and show warning
         return "./sandbox"  # Default fallback
     
     def center_window(self):
@@ -310,6 +324,31 @@ class ZenCubeGUI:
         self.log_output("🧊 ZenCube Sandbox Terminal\n", "info")
         self.log_output("=" * 80 + "\n", "info")
         self.log_output("Ready to execute commands. Select a file and configure limits.\n\n", "success")
+        
+        # Check if sandbox exists
+        self.validate_sandbox_exists()
+    
+    def validate_sandbox_exists(self):
+        """Check if sandbox binary exists and warn if not"""
+        if not os.path.exists(self.sandbox_path):
+            self.log_output("⚠️ WARNING: Sandbox binary not found!\n", "warning")
+            self.log_output(f"   Looking for: {self.sandbox_path}\n", "warning")
+            self.log_output(f"   Current directory: {os.getcwd()}\n", "info")
+            self.log_output("\n💡 To fix this:\n", "info")
+            self.log_output("   1. Make sure you're in the correct directory\n", "info")
+            self.log_output("   2. Build the sandbox: cd zencube && make\n", "info")
+            self.log_output("   3. Or run GUI from zencube directory: cd zencube && python Zencube_gui.py\n\n", "info")
+        else:
+            # Check if executable on Linux
+            import platform
+            if platform.system() != "Windows":
+                if not os.access(self.sandbox_path, os.X_OK):
+                    self.log_output("⚠️ WARNING: Sandbox found but not executable!\n", "warning")
+                    self.log_output(f"   Run: chmod +x {self.sandbox_path}\n\n", "info")
+                else:
+                    self.log_output(f"✅ Sandbox found: {self.sandbox_path}\n", "success")
+            else:
+                self.log_output(f"✅ Sandbox found: {self.sandbox_path}\n", "success")
     
     def create_control_buttons(self, parent):
         """Create control buttons"""
@@ -350,6 +389,14 @@ class ZenCubeGUI:
             command=self.show_help,
             width=15
         ).grid(row=0, column=3, padx=5)
+        
+        # Settings button
+        ttk.Button(
+            button_frame,
+            text="⚙️ Settings",
+            command=self.show_settings,
+            width=15
+        ).grid(row=0, column=4, padx=5)
     
     def create_status_bar(self):
         """Create status bar at bottom"""
@@ -666,6 +713,94 @@ For more information, see README.md
         """
         
         messagebox.showinfo("ZenCube Help", help_text)
+    
+    def show_settings(self):
+        """Show settings dialog"""
+        settings_window = tk.Toplevel(self.root)
+        settings_window.title("ZenCube Settings")
+        settings_window.geometry("600x300")
+        settings_window.transient(self.root)
+        settings_window.grab_set()
+        
+        # Center the dialog
+        settings_window.update_idletasks()
+        x = (settings_window.winfo_screenwidth() // 2) - (300)
+        y = (settings_window.winfo_screenheight() // 2) - (150)
+        settings_window.geometry(f'600x300+{x}+{y}')
+        
+        # Main frame
+        main_frame = ttk.Frame(settings_window, padding="20")
+        main_frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
+        
+        # Title
+        ttk.Label(
+            main_frame,
+            text="⚙️ ZenCube Settings",
+            font=("Helvetica", 14, "bold")
+        ).grid(row=0, column=0, columnspan=3, pady=(0, 20))
+        
+        # Sandbox Path Setting
+        ttk.Label(main_frame, text="Sandbox Binary Path:").grid(row=1, column=0, sticky=tk.W, pady=10)
+        
+        sandbox_var = tk.StringVar(value=self.sandbox_path)
+        sandbox_entry = ttk.Entry(main_frame, textvariable=sandbox_var, width=40)
+        sandbox_entry.grid(row=1, column=1, padx=10, pady=10)
+        
+        def browse_sandbox():
+            filename = filedialog.askopenfilename(
+                title="Select Sandbox Binary",
+                filetypes=[("Executable", "*"), ("All Files", "*.*")]
+            )
+            if filename:
+                sandbox_var.set(filename)
+        
+        ttk.Button(
+            main_frame,
+            text="Browse...",
+            command=browse_sandbox
+        ).grid(row=1, column=2, pady=10)
+        
+        # Current Status
+        ttk.Label(main_frame, text="Current Status:").grid(row=2, column=0, sticky=tk.W, pady=10)
+        
+        status_text = tk.Text(main_frame, height=4, width=50, wrap=tk.WORD)
+        status_text.grid(row=2, column=1, columnspan=2, pady=10, sticky=(tk.W, tk.E))
+        
+        current_path = os.path.abspath(self.sandbox_path)
+        exists = os.path.exists(current_path)
+        executable = os.access(current_path, os.X_OK) if exists else False
+        
+        status_text.insert("1.0", f"Path: {current_path}\n")
+        status_text.insert("end", f"Exists: {'✅ Yes' if exists else '❌ No'}\n")
+        status_text.insert("end", f"Executable: {'✅ Yes' if executable else '❌ No'}\n")
+        status_text.insert("end", f"Working Dir: {os.getcwd()}")
+        status_text.config(state='disabled')
+        
+        # Buttons
+        button_frame = ttk.Frame(main_frame)
+        button_frame.grid(row=3, column=0, columnspan=3, pady=(20, 0))
+        
+        def apply_settings():
+            new_path = sandbox_var.get().strip()
+            if new_path:
+                self.sandbox_path = new_path
+                self.log_output(f"\n⚙️ Sandbox path updated to: {new_path}\n", "info")
+                self.validate_sandbox_exists()
+                # Update status bar
+                import platform
+                os_name = platform.system()
+                wsl_status = "WSL Mode" if self.use_wsl.get() else "Native Mode"
+                self.status_bar.config(text=f"Ready | OS: {os_name} | {wsl_status} | Sandbox: {self.sandbox_path}")
+                settings_window.destroy()
+        
+        def reset_to_default():
+            self.sandbox_path = self.detect_sandbox_path()
+            sandbox_var.set(self.sandbox_path)
+            self.log_output(f"\n🔄 Sandbox path reset to: {self.sandbox_path}\n", "info")
+        
+        ttk.Button(button_frame, text="Apply", command=apply_settings, width=15).grid(row=0, column=0, padx=5)
+        ttk.Button(button_frame, text="Reset to Default", command=reset_to_default, width=15).grid(row=0, column=1, padx=5)
+        ttk.Button(button_frame, text="Cancel", command=settings_window.destroy, width=15).grid(row=0, column=2, padx=5)
 
 def main():
     """Main entry point"""
