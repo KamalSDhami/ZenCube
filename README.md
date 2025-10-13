@@ -17,6 +17,7 @@
 - [System Requirements](#system-requirements)
 - [Installation](#installation)
 - [Quick Start](#quick-start)
+- [GUI Usage](#gui-usage)
 - [Usage Guide](#usage-guide)
 - [Testing](#testing)
 - [Architecture](#architecture)
@@ -55,10 +56,10 @@
 |-------|--------|------------|
 | **Phase 1** - Process Isolation | ✅ Complete | 100% |
 | **Phase 2** - Resource Limits | ✅ Complete | 100% |
+| **GUI** - Graphical Interface | ✅ Complete | 100% |
 | **Phase 3** - Filesystem Restrictions | ⏳ Planned | 0% |
 | **Phase 4** - Network Control | ⏳ Planned | 0% |
 | **Phase 5** - Monitoring & Logging | ⏳ Planned | 0% |
-| **Phase 6** - GUI Dashboard | ⏳ Planned | 0% |
 
 **Last Updated**: October 12, 2025  
 **Version**: 2.0  
@@ -219,7 +220,50 @@ chmod +x demo.sh
 
 ---
 
-## 📚 Usage Guide
+## �️ GUI Usage
+
+ZenCube now includes a **graphical user interface** for easier interaction without using the command line!
+
+### Launching the GUI
+
+```bash
+# From the parent ZenCube directory
+cd ..
+python zencube_gui.py
+```
+
+### GUI Features
+
+✨ **User-Friendly Interface** - No command line needed!  
+📁 **File Browser** - Visually select executables  
+⚡ **Quick Commands** - Pre-configured test buttons  
+☑️ **Toggle Limits** - Enable/disable each limit individually  
+🎯 **Preset Configurations** - Quick limit presets (None/Light/Medium/Strict)  
+📺 **Live Terminal** - Real-time color-coded output  
+⏹️ **Stop Button** - Terminate running processes  
+
+### Quick GUI Tutorial
+
+1. **Launch GUI**: `python zencube_gui.py`
+2. **Select Command**: Click "Browse..." or use quick command buttons
+3. **Configure Limits**: Check/uncheck limits, adjust values as needed
+4. **Execute**: Click "▶ Execute Command"
+5. **View Output**: Watch the terminal for real-time results
+
+### GUI Presets
+
+| Preset | Configuration | Use Case |
+|--------|--------------|----------|
+| **No Limits** | All disabled | Trusted code |
+| **Light** | CPU:30s, Mem:1GB | Development |
+| **Medium** | CPU:10s, Mem:512MB, Procs:10 | Testing |
+| **Strict** | CPU:5s, Mem:256MB, Procs:5, File:50MB | Untrusted code |
+
+📖 **For detailed GUI documentation, see:** [`GUI_USAGE.md`](../GUI_USAGE.md)
+
+---
+
+## �📚 Usage Guide
 
 ### Command-Line Syntax
 
