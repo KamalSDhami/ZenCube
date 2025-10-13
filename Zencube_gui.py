@@ -43,6 +43,11 @@ class ZenCubeGUI:
         self.fsize_enabled = tk.BooleanVar(value=False)
         self.fsize_limit = tk.StringVar(value="100")
         
+        # WSL option (auto-detect Windows)
+        import platform
+        is_windows = platform.system() == "Windows"
+        self.use_wsl = tk.BooleanVar(value=is_windows)
+        
         # Command and file path
         self.command_path = tk.StringVar(value="")
         self.command_args = tk.StringVar(value="")
@@ -256,6 +261,24 @@ class ZenCubeGUI:
         ttk.Button(preset_frame, text="Light", command=self.preset_light, width=12).grid(row=0, column=2, padx=2)
         ttk.Button(preset_frame, text="Medium", command=self.preset_medium, width=12).grid(row=0, column=3, padx=2)
         ttk.Button(preset_frame, text="Strict", command=self.preset_strict, width=12).grid(row=0, column=4, padx=2)
+        
+        # WSL option
+        wsl_frame = ttk.Frame(limits_frame)
+        wsl_frame.grid(row=5, column=0, columnspan=4, sticky=tk.W, pady=(10, 0))
+        
+        wsl_check = ttk.Checkbutton(
+            wsl_frame,
+            text="Use WSL (Windows Subsystem for Linux)",
+            variable=self.use_wsl,
+            command=self.update_wsl_status
+        )
+        wsl_check.grid(row=0, column=0, sticky=tk.W)
+        
+        import platform
+        if platform.system() == "Windows":
+            ttk.Label(wsl_frame, text="(Auto-detected: Windows)", foreground="green").grid(row=0, column=1, padx=(10, 0))
+        else:
+            ttk.Label(wsl_frame, text="(Auto-detected: Linux/Unix)", foreground="blue").grid(row=0, column=1, padx=(10, 0))
     
     def create_output_section(self, parent):
         """Create output terminal section"""
@@ -330,9 +353,13 @@ class ZenCubeGUI:
     
     def create_status_bar(self):
         """Create status bar at bottom"""
+        import platform
+        os_name = platform.system()
+        wsl_status = "WSL Mode" if self.use_wsl.get() else "Native Mode"
+        
         self.status_bar = ttk.Label(
             self.root,
-            text=f"Ready | Sandbox: {self.sandbox_path}",
+            text=f"Ready | OS: {os_name} | {wsl_status} | Sandbox: {self.sandbox_path}",
             relief=tk.SUNKEN,
             anchor=tk.W
         )
@@ -380,6 +407,13 @@ class ZenCubeGUI:
         self.mem_entry.config(state='normal' if self.mem_enabled.get() else 'disabled')
         self.procs_entry.config(state='normal' if self.procs_enabled.get() else 'disabled')
         self.fsize_entry.config(state='normal' if self.fsize_enabled.get() else 'disabled')
+    
+    def update_wsl_status(self):
+        """Update status when WSL checkbox changes"""
+        if self.use_wsl.get():
+            self.log_output("🔄 WSL mode enabled - Commands will run via WSL\n", "info")
+        else:
+            self.log_output("🐧 Native mode enabled - Commands will run directly\n", "info")
     
     def preset_none(self):
         """Disable all limits"""
@@ -441,6 +475,10 @@ class ZenCubeGUI:
     
     def convert_to_wsl_path(self, windows_path):
         """Convert Windows path to WSL path format"""
+        # If WSL is not enabled, return path as-is
+        if not self.use_wsl.get():
+            return windows_path
+        
         # If it's already a relative path or starts with /, return as-is
         if not ':' in windows_path:
             return windows_path
@@ -469,8 +507,11 @@ class ZenCubeGUI:
         # Convert Windows path to WSL path if needed
         wsl_command = self.convert_to_wsl_path(command)
         
-        # Build WSL command
-        cmd_parts = ["wsl", self.sandbox_path]
+        # Build command - with or without WSL prefix
+        if self.use_wsl.get():
+            cmd_parts = ["wsl", self.sandbox_path]
+        else:
+            cmd_parts = [self.sandbox_path]
         
         # Add resource limits
         if self.cpu_enabled.get():
@@ -493,7 +534,7 @@ class ZenCubeGUI:
             if fsize_val:
                 cmd_parts.append(f"--fsize={fsize_val}")
         
-        # Add command and arguments (use WSL path)
+        # Add command and arguments (use WSL path if WSL enabled)
         cmd_parts.append(wsl_command)
         if args:
             cmd_parts.extend(args.split())
@@ -600,8 +641,9 @@ USAGE:
    - Memory: Limit memory usage in megabytes
    - Max Processes: Prevent fork bombs
    - File Size: Limit file writes in megabytes
-4. Click "Execute Command" to run
-5. View output in the terminal area
+4. Toggle WSL option (Windows users should keep this enabled)
+5. Click "Execute Command" to run
+6. View output in the terminal area
 
 PRESETS:
 - No Limits: Run without any restrictions
@@ -609,10 +651,16 @@ PRESETS:
 - Medium: Balanced limits for testing
 - Strict: Tight limits for untrusted code
 
+WSL OPTION:
+- Enabled: Commands run through WSL (for Windows users)
+- Disabled: Commands run directly (for Linux/Unix users)
+- Auto-detected based on your operating system
+
 TIPS:
 - Use test programs in ./tests/ to verify limits
 - Check output terminal for detailed execution logs
 - Use Stop button to terminate long-running processes
+- Linux users should uncheck WSL for native execution
 
 For more information, see README.md
         """
