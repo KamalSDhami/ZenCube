@@ -1,6 +1,5 @@
 """
 ZenCube Modern GUI - PySide6 Implementation
-Author: Kamal Singh Dhami
 Date: October 13, 2025
 Description: Modern, responsive GUI with React-inspired design using PySide6
 """
@@ -27,6 +26,12 @@ from PySide6.QtGui import (
     QFont, QColor, QPalette, QIcon, QLinearGradient, QPainter, QBrush,
     QPen, QPixmap, QTextCursor
 )
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.append(str(PROJECT_ROOT))
+
+from gui.file_jail_panel import attach_file_jail_panel
 
 
 class FlowLayout(QLayout):
@@ -464,6 +469,7 @@ class ZenCubeModernGUI(QMainWindow):
         
         self.create_command_section(top_layout)
         self.create_limits_section(top_layout)
+        self.create_file_jail_section(top_layout)
         top_layout.addStretch()
         
         top_scroll.setWidget(top_widget)
@@ -686,6 +692,13 @@ class ZenCubeModernGUI(QMainWindow):
         
         layout.addWidget(card)
     
+    def create_file_jail_section(self, layout):
+        """Create the File Jail panel container."""
+        card = ModernCard("File Jail")
+        card.main_layout.setSpacing(12)
+        self.file_jail_panel = attach_file_jail_panel(self, card.main_layout)
+        layout.addWidget(card)
+
     def create_output_section(self, layout):
         """Create output terminal section"""
         card = ModernCard("Terminal Output")
