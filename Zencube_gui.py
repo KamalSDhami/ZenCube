@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """
 ZenCube GUI - Graphical User Interface for ZenCube Sandbox
-Author: Kamal Singh Dhami
 Date: October 12, 2025
 Description: Modern GUI for executing commands in ZenCube sandbox with resource limits
 """
@@ -21,16 +20,16 @@ class ZenCubeGUI:
         self.root.geometry("1200x800")
         self.root.minsize(900, 600)
         
-        # Set color scheme
+        
         self.bg_color = "#2b2b2b"
         self.fg_color = "#ffffff"
         self.accent_color = "#4a9eff"
         self.button_color = "#3d3d3d"
         
-        # Configure root background
+        
         self.root.configure(bg=self.bg_color)
         
-        # Variables for resource limits
+        
         self.cpu_enabled = tk.BooleanVar(value=False)
         self.cpu_limit = tk.StringVar(value="5")
         
@@ -43,27 +42,27 @@ class ZenCubeGUI:
         self.fsize_enabled = tk.BooleanVar(value=False)
         self.fsize_limit = tk.StringVar(value="100")
         
-        # WSL option (auto-detect Windows)
+        
         import platform
         is_windows = platform.system() == "Windows"
         self.use_wsl = tk.BooleanVar(value=is_windows)
         
-        # Command and file path
+        
         self.command_path = tk.StringVar(value="")
         self.command_args = tk.StringVar(value="")
         
-        # Detect sandbox path
+        
         self.sandbox_path = self.detect_sandbox_path()
         
-        # Create UI
+        
         self.create_widgets()
         
-        # Center window
+        
         self.center_window()
     
     def detect_sandbox_path(self):
         """Detect the sandbox binary path"""
-        # Get the directory where the GUI script is located
+        
         script_dir = os.path.dirname(os.path.abspath(__file__))
         
         possible_paths = [
@@ -79,7 +78,7 @@ class ZenCubeGUI:
         for path in possible_paths:
             full_path = os.path.abspath(path)
             if os.path.exists(full_path) and os.path.isfile(full_path):
-                # Check if file is executable (Linux/Unix)
+                
                 import platform
                 if platform.system() != "Windows":
                     if os.access(full_path, os.X_OK):
@@ -87,8 +86,8 @@ class ZenCubeGUI:
                 else:
                     return path
         
-        # If not found, return default and show warning
-        return "./sandbox"  # Default fallback
+        
+        return "./sandbox" 
     
     def center_window(self):
         """Center the window on screen"""
@@ -102,32 +101,32 @@ class ZenCubeGUI:
     def create_widgets(self):
         """Create all GUI widgets"""
         
-        # Main container with padding
+        
         main_frame = ttk.Frame(self.root, padding="10")
         main_frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
         
-        # Configure grid weights
+        
         self.root.columnconfigure(0, weight=1)
         self.root.rowconfigure(0, weight=1)
         main_frame.columnconfigure(0, weight=1)
         main_frame.rowconfigure(3, weight=1)
         
-        # ===== HEADER =====
+        
         self.create_header(main_frame)
         
-        # ===== FILE SELECTION SECTION =====
+        
         self.create_file_section(main_frame)
         
-        # ===== RESOURCE LIMITS SECTION =====
+        
         self.create_limits_section(main_frame)
         
-        # ===== OUTPUT TERMINAL SECTION =====
+        
         self.create_output_section(main_frame)
         
-        # ===== CONTROL BUTTONS =====
+        
         self.create_control_buttons(main_frame)
         
-        # ===== STATUS BAR =====
+        
         self.create_status_bar()
     
     def create_header(self, parent):
@@ -135,7 +134,7 @@ class ZenCubeGUI:
         header_frame = ttk.Frame(parent)
         header_frame.grid(row=0, column=0, sticky=(tk.W, tk.E), pady=(0, 10))
         
-        # Title
+        
         title_label = ttk.Label(
             header_frame,
             text="🧊 ZenCube Sandbox Controller",
@@ -143,7 +142,7 @@ class ZenCubeGUI:
         )
         title_label.grid(row=0, column=0, sticky=tk.W)
         
-        # Subtitle
+        
         subtitle_label = ttk.Label(
             header_frame,
             text="Execute commands safely with resource limits",
@@ -157,7 +156,7 @@ class ZenCubeGUI:
         file_frame.grid(row=1, column=0, sticky=(tk.W, tk.E), pady=(0, 10))
         file_frame.columnconfigure(1, weight=1)
         
-        # Command/File path
+        
         ttk.Label(file_frame, text="Command/File:").grid(row=0, column=0, sticky=tk.W, padx=(0, 5))
         
         command_entry = ttk.Entry(file_frame, textvariable=self.command_path, width=50)
@@ -171,13 +170,13 @@ class ZenCubeGUI:
         )
         browse_btn.grid(row=0, column=2, padx=5)
         
-        # Command arguments
+        
         ttk.Label(file_frame, text="Arguments:").grid(row=1, column=0, sticky=tk.W, padx=(0, 5), pady=(10, 0))
         
         args_entry = ttk.Entry(file_frame, textvariable=self.command_args, width=50)
         args_entry.grid(row=1, column=1, columnspan=2, sticky=(tk.W, tk.E), padx=5, pady=(10, 0))
         
-        # Quick commands
+        
         ttk.Label(file_frame, text="Quick Commands:").grid(row=2, column=0, sticky=tk.W, pady=(10, 0))
         
         quick_frame = ttk.Frame(file_frame)
@@ -205,11 +204,11 @@ class ZenCubeGUI:
         limits_frame = ttk.LabelFrame(parent, text="Resource Limits", padding="10")
         limits_frame.grid(row=2, column=0, sticky=(tk.W, tk.E), pady=(0, 10))
         
-        # Create a grid layout for limits
+        
         limits_frame.columnconfigure(1, weight=1)
         limits_frame.columnconfigure(3, weight=1)
         
-        # CPU Limit
+        
         cpu_check = ttk.Checkbutton(
             limits_frame,
             text="CPU Time (seconds)",
@@ -223,7 +222,7 @@ class ZenCubeGUI:
         
         ttk.Label(limits_frame, text="(Default: 5s)").grid(row=0, column=2, sticky=tk.W, padx=5)
         
-        # Memory Limit
+        
         mem_check = ttk.Checkbutton(
             limits_frame,
             text="Memory (MB)",
@@ -237,7 +236,7 @@ class ZenCubeGUI:
         
         ttk.Label(limits_frame, text="(Default: 256 MB)").grid(row=1, column=2, sticky=tk.W, padx=5)
         
-        # Process Limit
+        
         procs_check = ttk.Checkbutton(
             limits_frame,
             text="Max Processes",
@@ -251,7 +250,7 @@ class ZenCubeGUI:
         
         ttk.Label(limits_frame, text="(Default: 10)").grid(row=2, column=2, sticky=tk.W, padx=5)
         
-        # File Size Limit
+        
         fsize_check = ttk.Checkbutton(
             limits_frame,
             text="File Size (MB)",
@@ -265,7 +264,7 @@ class ZenCubeGUI:
         
         ttk.Label(limits_frame, text="(Default: 100 MB)").grid(row=3, column=2, sticky=tk.W, padx=5)
         
-        # Preset buttons
+        
         preset_frame = ttk.Frame(limits_frame)
         preset_frame.grid(row=4, column=0, columnspan=4, sticky=tk.W, pady=(10, 0))
         
@@ -276,7 +275,7 @@ class ZenCubeGUI:
         ttk.Button(preset_frame, text="Medium", command=self.preset_medium, width=12).grid(row=0, column=3, padx=2)
         ttk.Button(preset_frame, text="Strict", command=self.preset_strict, width=12).grid(row=0, column=4, padx=2)
         
-        # WSL option
+        
         wsl_frame = ttk.Frame(limits_frame)
         wsl_frame.grid(row=5, column=0, columnspan=4, sticky=tk.W, pady=(10, 0))
         
@@ -301,7 +300,7 @@ class ZenCubeGUI:
         output_frame.columnconfigure(0, weight=1)
         output_frame.rowconfigure(0, weight=1)
         
-        # Create scrolled text widget
+        
         self.output_text = scrolledtext.ScrolledText(
             output_frame,
             wrap=tk.WORD,
@@ -314,18 +313,18 @@ class ZenCubeGUI:
         )
         self.output_text.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
         
-        # Add tags for colored output
+        
         self.output_text.tag_configure("error", foreground="#ff4444")
         self.output_text.tag_configure("success", foreground="#44ff44")
         self.output_text.tag_configure("warning", foreground="#ffaa00")
         self.output_text.tag_configure("info", foreground="#4a9eff")
         
-        # Initial message
+        
         self.log_output("🧊 ZenCube Sandbox Terminal\n", "info")
         self.log_output("=" * 80 + "\n", "info")
         self.log_output("Ready to execute commands. Select a file and configure limits.\n\n", "success")
         
-        # Check if sandbox exists
+        
         self.validate_sandbox_exists()
     
     def validate_sandbox_exists(self):
@@ -339,7 +338,7 @@ class ZenCubeGUI:
             self.log_output("   2. Build the sandbox: cd zencube && make\n", "info")
             self.log_output("   3. Or run GUI from zencube directory: cd zencube && python Zencube_gui.py\n\n", "info")
         else:
-            # Check if executable on Linux
+        
             import platform
             if platform.system() != "Windows":
                 if not os.access(self.sandbox_path, os.X_OK):
@@ -355,7 +354,7 @@ class ZenCubeGUI:
         button_frame = ttk.Frame(parent)
         button_frame.grid(row=4, column=0, sticky=(tk.W, tk.E), pady=(0, 10))
         
-        # Execute button (large and prominent)
+        
         self.execute_btn = ttk.Button(
             button_frame,
             text="▶ Execute Command",
@@ -364,7 +363,7 @@ class ZenCubeGUI:
         )
         self.execute_btn.grid(row=0, column=0, padx=5)
         
-        # Stop button
+        
         self.stop_btn = ttk.Button(
             button_frame,
             text="⏹ Stop",
@@ -374,7 +373,7 @@ class ZenCubeGUI:
         )
         self.stop_btn.grid(row=0, column=1, padx=5)
         
-        # Clear output button
+        
         ttk.Button(
             button_frame,
             text="🗑 Clear Output",
@@ -382,7 +381,7 @@ class ZenCubeGUI:
             width=15
         ).grid(row=0, column=2, padx=5)
         
-        # Help button
+        
         ttk.Button(
             button_frame,
             text="❓ Help",
@@ -390,7 +389,7 @@ class ZenCubeGUI:
             width=15
         ).grid(row=0, column=3, padx=5)
         
-        # Settings button
+        
         ttk.Button(
             button_frame,
             text="⚙️ Settings",
@@ -425,19 +424,19 @@ class ZenCubeGUI:
         )
         
         if filename:
-            # Warn if user selected a source file instead of executable
+        
             if filename.endswith('.c') or filename.endswith('.cpp'):
                 self.log_output(f"⚠️ Warning: You selected a source file ({filename})\n", "warning")
                 self.log_output(f"💡 Tip: Select the compiled executable (without .c extension)\n", "info")
                 
-                # Try to suggest the executable name
+        
                 executable = filename.rsplit('.', 1)[0]
                 self.log_output(f"💡 Try selecting: {executable}\n", "info")
             
             self.command_path.set(filename)
             self.log_output(f"📁 Selected file: {filename}\n", "info")
             
-            # Show WSL path conversion
+        
             wsl_path = self.convert_to_wsl_path(filename)
             if wsl_path != filename:
                 self.log_output(f"🔄 WSL path: {wsl_path}\n", "info")
@@ -522,19 +521,17 @@ class ZenCubeGUI:
     
     def convert_to_wsl_path(self, windows_path):
         """Convert Windows path to WSL path format"""
-        # If WSL is not enabled, return path as-is
+        
         if not self.use_wsl.get():
             return windows_path
         
-        # If it's already a relative path or starts with /, return as-is
+        
         if not ':' in windows_path:
             return windows_path
         
-        # Convert Windows path to WSL format
-        # C:/Users/... -> /mnt/c/Users/...
         path = windows_path.replace('\\', '/')
         
-        # Check if it's an absolute Windows path (e.g., C:/ or C:\)
+        
         if len(path) > 1 and path[1] == ':':
             drive = path[0].lower()
             rest = path[2:]  # Everything after "C:"
@@ -551,16 +548,16 @@ class ZenCubeGUI:
         if not command:
             raise ValueError("No command specified")
         
-        # Convert Windows path to WSL path if needed
+        
         wsl_command = self.convert_to_wsl_path(command)
         
-        # Build command - with or without WSL prefix
+        
         if self.use_wsl.get():
             cmd_parts = ["wsl", self.sandbox_path]
         else:
             cmd_parts = [self.sandbox_path]
         
-        # Add resource limits
+        
         if self.cpu_enabled.get():
             cpu_val = self.cpu_limit.get().strip()
             if cpu_val:
@@ -581,7 +578,7 @@ class ZenCubeGUI:
             if fsize_val:
                 cmd_parts.append(f"--fsize={fsize_val}")
         
-        # Add command and arguments (use WSL path if WSL enabled)
+        
         cmd_parts.append(wsl_command)
         if args:
             cmd_parts.extend(args.split())
@@ -591,12 +588,12 @@ class ZenCubeGUI:
     def execute_command(self):
         """Execute the sandbox command in a separate thread"""
         try:
-            # Validate command before execution
+            
             command = self.command_path.get().strip()
             if not command:
                 raise ValueError("No command specified. Please enter a command or use Browse.")
             
-            # Check if user accidentally selected a source file
+            
             if command.endswith('.c') or command.endswith('.cpp'):
                 error_msg = (
                     "⚠️ Cannot execute source file!\n\n"
@@ -611,17 +608,17 @@ class ZenCubeGUI:
             
             cmd_parts = self.build_command()
             
-            # Log command
+            
             self.log_output("\n" + "=" * 80 + "\n", "info")
             self.log_output(f"🚀 Executing: {' '.join(cmd_parts)}\n", "info")
             self.log_output("=" * 80 + "\n", "info")
             
-            # Update UI state
+            
             self.execute_btn.config(state='disabled')
             self.stop_btn.config(state='normal')
             self.status_bar.config(text="Running...")
             
-            # Execute in thread
+            
             thread = threading.Thread(target=self.run_command, args=(cmd_parts,), daemon=True)
             thread.start()
             
@@ -644,15 +641,15 @@ class ZenCubeGUI:
                 universal_newlines=True
             )
             
-            # Read output line by line
+            
             for line in self.process.stdout:
                 self.root.after(0, self.log_output, line)
             
-            # Wait for process to complete
+            
             self.process.wait()
             exit_code = self.process.returncode
             
-            # Log completion
+            
             if exit_code == 0:
                 self.root.after(0, self.log_output, f"\n✅ Command completed successfully (exit code: {exit_code})\n", "success")
             else:
@@ -662,7 +659,7 @@ class ZenCubeGUI:
             self.root.after(0, self.log_output, f"\n❌ Execution error: {e}\n", "error")
         
         finally:
-            # Reset UI state
+            
             self.root.after(0, self.execute_btn.config, {'state': 'normal'})
             self.root.after(0, self.stop_btn.config, {'state': 'disabled'})
             self.root.after(0, self.status_bar.config, {'text': 'Ready'})
@@ -722,24 +719,24 @@ For more information, see README.md
         settings_window.transient(self.root)
         settings_window.grab_set()
         
-        # Center the dialog
+        
         settings_window.update_idletasks()
         x = (settings_window.winfo_screenwidth() // 2) - (300)
         y = (settings_window.winfo_screenheight() // 2) - (150)
         settings_window.geometry(f'600x300+{x}+{y}')
         
-        # Main frame
+        
         main_frame = ttk.Frame(settings_window, padding="20")
         main_frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
         
-        # Title
+        
         ttk.Label(
             main_frame,
             text="⚙️ ZenCube Settings",
             font=("Helvetica", 14, "bold")
         ).grid(row=0, column=0, columnspan=3, pady=(0, 20))
         
-        # Sandbox Path Setting
+        
         ttk.Label(main_frame, text="Sandbox Binary Path:").grid(row=1, column=0, sticky=tk.W, pady=10)
         
         sandbox_var = tk.StringVar(value=self.sandbox_path)
@@ -760,7 +757,7 @@ For more information, see README.md
             command=browse_sandbox
         ).grid(row=1, column=2, pady=10)
         
-        # Current Status
+        
         ttk.Label(main_frame, text="Current Status:").grid(row=2, column=0, sticky=tk.W, pady=10)
         
         status_text = tk.Text(main_frame, height=4, width=50, wrap=tk.WORD)
@@ -776,7 +773,7 @@ For more information, see README.md
         status_text.insert("end", f"Working Dir: {os.getcwd()}")
         status_text.config(state='disabled')
         
-        # Buttons
+        
         button_frame = ttk.Frame(main_frame)
         button_frame.grid(row=3, column=0, columnspan=3, pady=(20, 0))
         
@@ -786,7 +783,7 @@ For more information, see README.md
                 self.sandbox_path = new_path
                 self.log_output(f"\n⚙️ Sandbox path updated to: {new_path}\n", "info")
                 self.validate_sandbox_exists()
-                # Update status bar
+                
                 import platform
                 os_name = platform.system()
                 wsl_status = "WSL Mode" if self.use_wsl.get() else "Native Mode"
@@ -806,14 +803,14 @@ def main():
     """Main entry point"""
     root = tk.Tk()
     
-    # Set style
+    
     style = ttk.Style()
     style.theme_use('clam')
     
-    # Create app
+    
     app = ZenCubeGUI(root)
     
-    # Start main loop
+    
     root.mainloop()
 
 if __name__ == "__main__":
