@@ -4,11 +4,12 @@ Date: October 13, 2025
 Description: Modern, responsive GUI with React-inspired design using PySide6
 """
 
-import sys
 import os
 import subprocess
 import threading
 import platform
+import shlex
+import sys
 from pathlib import Path
 
 from PySide6.QtWidgets import (
@@ -32,6 +33,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.append(str(PROJECT_ROOT))
 
 from gui.file_jail_panel import attach_file_jail_panel
+from gui.network_panel import attach_network_panel
 
 
 class FlowLayout(QLayout):
@@ -318,10 +320,12 @@ class CommandExecutor(QThread):
     output_received = Signal(str)
     finished_signal = Signal(int)
     
-    def __init__(self, command_parts):
+    def __init__(self, command_parts, env=None, cwd=None):
         super().__init__()
         self.command_parts = command_parts
         self.process = None
+        self.env = env
+        self.cwd = cwd
     
     def run(self):
         try:
@@ -331,7 +335,9 @@ class CommandExecutor(QThread):
                 stderr=subprocess.STDOUT,
                 text=True,
                 bufsize=1,
-                universal_newlines=True
+                universal_newlines=True,
+                env=self.env,
+                cwd=self.cwd,
             )
             
             for line in iter(self.process.stdout.readline, ''):
@@ -359,6 +365,9 @@ class ZenCubeModernGUI(QMainWindow):
         self.use_wsl = platform.system() == "Windows"
         self.sandbox_path = self.detect_sandbox_path()
         self.terminal_visible = True  # Track terminal visibility
+        self.network_panel = None
+        self._last_raw_command: list[str] = []
+        self._last_prepared_command: list[str] = []
         
         self.setWindowTitle("ZenCube Sandbox - Modern UI")
         self.setMinimumSize(1000, 700)
@@ -470,6 +479,7 @@ class ZenCubeModernGUI(QMainWindow):
         self.create_command_section(top_layout)
         self.create_limits_section(top_layout)
         self.create_file_jail_section(top_layout)
+        self.create_network_section(top_layout)
         top_layout.addStretch()
         
         top_scroll.setWidget(top_widget)
@@ -699,6 +709,13 @@ class ZenCubeModernGUI(QMainWindow):
         self.file_jail_panel = attach_file_jail_panel(self, card.main_layout)
         layout.addWidget(card)
 
+    def create_network_section(self, layout):
+        """Create the network restriction panel container."""
+        card = ModernCard("Network Restrictions")
+        card.main_layout.setSpacing(12)
+        self.network_panel = attach_network_panel(self, card.main_layout)
+        layout.addWidget(card)
+
     def create_output_section(self, layout):
         """Create output terminal section"""
         card = ModernCard("Terminal Output")
@@ -902,22 +919,61 @@ class ZenCubeModernGUI(QMainWindow):
         os_name = platform.system()
         self.statusBar().showMessage(f"Ready | OS: {os_name} | {mode} | Sandbox: {self.sandbox_path}")
     
-    def build_command(self):
-        """Build command with limits"""
-        command = self.command_input.text().strip()
-        args = self.args_input.text().strip()
-        
-        if not command:
-            raise ValueError("No command specified")
-        
-        # Convert path if WSL
+    def _convert_command_for_platform(self, command: str) -> str:
         if self.use_wsl and ':' in command:
             path = command.replace('\\', '/')
             if len(path) > 1 and path[1] == ':':
                 drive = path[0].lower()
                 rest = path[2:]
-                command = f"/mnt/{drive}{rest}"
-        
+                return f"/mnt/{drive}{rest}"
+        return command
+
+    def _collect_target_command_parts(self) -> list[str]:
+        command = self.command_input.text().strip()
+        if not command:
+            raise ValueError("No command specified")
+        command = self._convert_command_for_platform(command)
+        args_text = self.args_input.text().strip()
+        parts: list[str] = [command]
+        if args_text:
+            try:
+                parts.extend(shlex.split(args_text))
+            except ValueError as exc:
+                raise ValueError(f"Invalid arguments: {exc}") from exc
+        return parts
+
+    def compute_target_commands(self) -> tuple[list[str], list[str]]:
+        raw_parts = self._collect_target_command_parts()
+        if self.network_panel:
+            prepared_parts = self.network_panel.prepare_command(raw_parts)
+        else:
+            prepared_parts = list(raw_parts)
+        self._last_raw_command = list(raw_parts)
+        self._last_prepared_command = list(prepared_parts)
+        return self._last_raw_command, self._last_prepared_command
+
+    def get_effective_target_command(self) -> list[str]:
+        _, prepared = self.compute_target_commands()
+        return list(prepared)
+
+    def _build_execution_env(self) -> dict[str, str]:
+        env = os.environ.copy()
+        root = str(PROJECT_ROOT)
+        existing = env.get("PYTHONPATH", "")
+        if existing:
+            paths = existing.split(os.pathsep)
+            if root not in paths:
+                env["PYTHONPATH"] = os.pathsep.join([root, existing])
+        else:
+            env["PYTHONPATH"] = root
+        if self.network_panel:
+            self.network_panel.apply_env_overrides(env)
+        return env
+
+    def build_command(self):
+        """Build command with limits"""
+        raw_parts, prepared_parts = self.compute_target_commands()
+
         # Build command
         if self.use_wsl:
             cmd_parts = ["wsl", self.sandbox_path]
@@ -936,11 +992,22 @@ class ZenCubeModernGUI(QMainWindow):
         
         if self.fsize_check.isChecked():
             cmd_parts.append(f"--fsize={self.fsize_spin.value()}")
+
+        if self.network_panel and self.network_panel.is_disabled():
+            cmd_parts.append("--no-net")
+            if self.network_panel.is_enforce_mode():
+                if self.use_wsl:
+                    sandbox_options = cmd_parts[2:].copy()
+                else:
+                    sandbox_options = cmd_parts[1:].copy()
+                enforce_args = sandbox_options + raw_parts
+                self.network_panel.show_enforce_command(self.sandbox_path, enforce_args)
+            else:
+                self.network_panel.reset_note()
+        elif self.network_panel:
+            self.network_panel.reset_note()
         
-        cmd_parts.append(command)
-        if args:
-            cmd_parts.extend(args.split())
-        
+        cmd_parts.extend(prepared_parts)
         return cmd_parts
     
     def execute_command(self):
@@ -960,8 +1027,9 @@ class ZenCubeModernGUI(QMainWindow):
                 )
                 return
             
-            # Build command
+            # Build command and environment
             cmd_parts = self.build_command()
+            env = self._build_execution_env()
             
             # Log
             self.log_output("\n" + "=" * 80 + "\n", "info")
@@ -974,7 +1042,7 @@ class ZenCubeModernGUI(QMainWindow):
             self.statusBar().showMessage("Running...")
             
             # Execute in thread
-            self.executor = CommandExecutor(cmd_parts)
+            self.executor = CommandExecutor(cmd_parts, env=env, cwd=str(PROJECT_ROOT))
             self.executor.output_received.connect(self.log_output)
             self.executor.finished_signal.connect(self.on_command_finished)
             self.executor.start()

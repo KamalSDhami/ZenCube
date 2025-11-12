@@ -14,6 +14,14 @@
 #include <stdarg.h>
 #include <signal.h>
 #include <limits.h>
+#include <stddef.h>
+#ifdef __linux__
+#include <linux/audit.h>
+#include <linux/filter.h>
+#include <linux/seccomp.h>
+#include <sys/prctl.h>
+#include <sys/syscall.h>
+#endif
 
 typedef struct {
     int cpu_seconds;
@@ -28,10 +36,12 @@ void log_message(const char *format, ...);
 void log_command(int argc, char *argv[], int start_index);
 double timespec_diff(struct timespec *start, struct timespec *end);
 int parse_arguments(int argc, char *argv[], ResourceLimits *limits, int *cmd_start_index,
-                    int *jail_enabled, char *jail_path, size_t jail_path_size);
+                    int *jail_enabled, int *disable_network,
+                    char *jail_path, size_t jail_path_size);
 int apply_resource_limits(const ResourceLimits *limits);
 void log_resource_limits(const ResourceLimits *limits);
 int setup_chroot_jail(const char *jail_path);
+int apply_network_seccomp(void);
 
 void print_usage(const char *program_name) {
     printf("Usage: %s [OPTIONS] <command> [arguments...]\n", program_name);
@@ -44,6 +54,7 @@ void print_usage(const char *program_name) {
     printf("  --procs=<count>      Limit number of processes (default: unlimited)\n");
     printf("  --fsize=<MB>         Limit file size in megabytes (default: unlimited)\n");
     printf("  --jail=<path>        Request chroot jail at <path> (requires root)\n");
+    printf("  --no-net             Disable network syscalls (seccomp)\n");
     printf("  --help               Display this help message\n");
     printf("\nExamples:\n");
     printf("  %s /bin/ls -l /\n", program_name);
@@ -91,7 +102,8 @@ double timespec_diff(struct timespec *start, struct timespec *end) {
 }
 
 int parse_arguments(int argc, char *argv[], ResourceLimits *limits, int *cmd_start_index,
-                    int *jail_enabled, char *jail_path, size_t jail_path_size) {
+                    int *jail_enabled, int *disable_network,
+                    char *jail_path, size_t jail_path_size) {
     int i = 1;
     
 
@@ -101,6 +113,9 @@ int parse_arguments(int argc, char *argv[], ResourceLimits *limits, int *cmd_sta
     limits->max_file_mb = 0;
     if (jail_enabled != NULL) {
         *jail_enabled = 0;
+    }
+    if (disable_network != NULL) {
+        *disable_network = 0;
     }
     if (jail_path != NULL && jail_path_size > 0) {
         jail_path[0] = '\0';
@@ -157,6 +172,12 @@ int parse_arguments(int argc, char *argv[], ResourceLimits *limits, int *cmd_sta
             strncpy(jail_path, path_arg, jail_path_size - 1);
             jail_path[jail_path_size - 1] = '\0';
             *jail_enabled = 1;
+        } else if (strcmp(argv[i], "--no-net") == 0) {
+            if (disable_network == NULL) {
+                fprintf(stderr, "Error: Network flag unsupported in this build\n");
+                return -1;
+            }
+            *disable_network = 1;
         } else {
             fprintf(stderr, "Error: Unknown option: %s\n", argv[i]);
             return -1;
@@ -259,6 +280,47 @@ int setup_chroot_jail(const char *jail_path) {
     return 0;
 }
 
+int apply_network_seccomp(void) {
+#ifdef __linux__
+#ifndef SECCOMP_RET_ERRNO
+#define SECCOMP_RET_ERRNO 0x00050000U
+#endif
+#define ZC_DENY_SYSCALL(name) \
+    BPF_JUMP(BPF_JMP | BPF_JEQ | BPF_K, __NR_##name, 0, 1), \
+    BPF_STMT(BPF_RET | BPF_K, SECCOMP_RET_ERRNO | (EPERM & 0xFFF))
+
+    static const struct sock_filter filter_program[] = {
+        BPF_STMT(BPF_LD | BPF_W | BPF_ABS, offsetof(struct seccomp_data, nr)),
+        ZC_DENY_SYSCALL(socket),
+        ZC_DENY_SYSCALL(connect),
+        ZC_DENY_SYSCALL(sendto),
+        ZC_DENY_SYSCALL(sendmsg),
+        ZC_DENY_SYSCALL(recvfrom),
+        ZC_DENY_SYSCALL(recvmsg),
+        BPF_STMT(BPF_RET | BPF_K, SECCOMP_RET_ALLOW),
+    };
+
+    struct sock_fprog prog = {
+        .len = (unsigned short)(sizeof(filter_program) / sizeof(filter_program[0])),
+        .filter = (struct sock_filter *)filter_program,
+    };
+
+    if (prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0) != 0) {
+        return -1;
+    }
+
+    if (prctl(PR_SET_SECCOMP, SECCOMP_MODE_FILTER, &prog) != 0) {
+        return -1;
+    }
+
+#undef ZC_DENY_SYSCALL
+    return 0;
+#else
+    errno = ENOSYS;
+    return -1;
+#endif
+}
+
 int main(int argc, char *argv[]) {
     pid_t child_pid;
     int status;
@@ -267,11 +329,13 @@ int main(int argc, char *argv[]) {
     ResourceLimits limits;
     int cmd_start_index;
     int jail_enabled = 0;
+    int disable_network = 0;
     char jail_path[PATH_MAX];
     
 
     if (parse_arguments(argc, argv, &limits, &cmd_start_index,
-                        &jail_enabled, jail_path, sizeof(jail_path)) != 0) {
+                        &jail_enabled, &disable_network,
+                        jail_path, sizeof(jail_path)) != 0) {
         fprintf(stderr, "\n");
         print_usage(argv[0]);
         return EXIT_FAILURE;
@@ -286,6 +350,9 @@ int main(int argc, char *argv[]) {
     
 
     log_resource_limits(&limits);
+    if (disable_network) {
+        log_message("Network restriction requested (--no-net)");
+    }
     if (jail_enabled) {
         char resolved_path[PATH_MAX];
         struct stat jail_stat;
@@ -343,6 +410,18 @@ int main(int argc, char *argv[]) {
         
         
         
+        if (disable_network) {
+            if (apply_network_seccomp() == 0) {
+                log_message("Seccomp network filter installed");
+            } else {
+                int saved_errno = errno;
+                log_message("Warning: Unable to install network filter (errno=%d: %s)",
+                            saved_errno, strerror(saved_errno));
+                log_message("Proceeding without kernel-level network restriction."
+                            " Use monitor/net_wrapper.py in dev-safe mode.");
+            }
+        }
+
         if (execvp(argv[cmd_start_index], &argv[cmd_start_index]) == -1) {
         
             fprintf(stderr, "[Sandbox] Child Error: Failed to execute '%s': %s\n", 
