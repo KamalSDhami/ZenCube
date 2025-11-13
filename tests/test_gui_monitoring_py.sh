@@ -3,8 +3,12 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")"/.. && pwd)"
 export QT_QPA_PLATFORM=offscreen
+PYTHON_BIN="${ROOT_DIR}/.venv/bin/python"
+if [[ ! -x "${PYTHON_BIN}" ]]; then
+    PYTHON_BIN="$(command -v python3)"
+fi
 
-python3 <<'PY'
+"${PYTHON_BIN}" <<'PY'
 import json
 import os
 import subprocess

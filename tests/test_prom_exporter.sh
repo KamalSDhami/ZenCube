@@ -8,7 +8,13 @@ export MONITOR_LOG_DIR="$TMP_DIR"
 export PROMETHEUS_ENABLED=true
 export PROMETHEUS_PORT=9209
 
-python - <<'PY'
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")"/.. && pwd)"
+PYTHON_BIN="${ROOT_DIR}/.venv/bin/python"
+if [[ ! -x "${PYTHON_BIN}" ]]; then
+    PYTHON_BIN="$(command -v python3)"
+fi
+
+"${PYTHON_BIN}" - <<'PY'
 import os
 import time
 import urllib.request

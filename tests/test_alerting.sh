@@ -5,8 +5,13 @@ TMP_DIR=$(mktemp -d)
 trap 'rm -rf "$TMP_DIR"' EXIT
 
 export MONITOR_LOG_DIR="$TMP_DIR"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")"/.. && pwd)"
+PYTHON_BIN="${ROOT_DIR}/.venv/bin/python"
+if [[ ! -x "${PYTHON_BIN}" ]]; then
+    PYTHON_BIN="$(command -v python3)"
+fi
 
-python - <<'PY'
+"${PYTHON_BIN}" - <<'PY'
 import os
 from pathlib import Path
 

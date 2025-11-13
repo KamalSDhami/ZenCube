@@ -1,8 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")"/.. && pwd)"
+PYTHON_BIN="${ROOT_DIR}/.venv/bin/python"
+if [[ ! -x "${PYTHON_BIN}" ]]; then
+    PYTHON_BIN="$(command -v python3)"
+fi
+
 # Sanity check: sampling a short-lived process produces at least one sample without raising.
-python - <<'PY'
+"${PYTHON_BIN}" - <<'PY'
 import subprocess
 import time
 

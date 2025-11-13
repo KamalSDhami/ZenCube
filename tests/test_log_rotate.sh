@@ -15,7 +15,13 @@ for i in $(seq 1 15); do
     sleep 0.02
 done
 
-python - <<'PY'
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")"/.. && pwd)"
+PYTHON_BIN="${ROOT_DIR}/.venv/bin/python"
+if [[ ! -x "${PYTHON_BIN}" ]]; then
+    PYTHON_BIN="$(command -v python3)"
+fi
+
+"${PYTHON_BIN}" - <<'PY'
 import os
 from pathlib import Path
 

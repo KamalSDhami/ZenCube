@@ -59,16 +59,27 @@
 - Extended the PySide6 application with a "Monitoring & Metrics" card (`gui/monitor_panel.py`) that can be armed for any execution. When enabled the panel streams live samples, highlights peaks, and provides a direct link to the JSONL log.
 - Updated `CommandExecutor` to emit the sandbox PID on launch and taught `zencube_modern_gui.py` to wire the lifecycle events (start/finish/close) so monitoring is automatic and cleans up correctly.
 
+## Enhancements (Phase 3)
+- Embedded twin Matplotlib charts for CPU% and RSS MB with EWMA smoothing, rolling window controls, pause/resume, and mean/peak overlays. Chart updates now run on the GUI thread via a queued signal from the sampling worker.
+- Introduced `monitor/log_rotate.py` and a GUI rotate button that compresses older JSONL logs into `monitor/logs/archive/` while keeping the latest runs on disk. Dry-run mode and CLI flags keep the helper dev-safe.
+- Added `monitor/alert_manager.py` to evaluate threshold breaches (configurable via JSON) and surface alert badges in the GUI. Alerts append to `alerts.jsonl`, support acknowledgement, and persist context between runs.
+- Delivered `monitor/prometheus_exporter.py` so operators can opt-in to a local metrics endpoint via `PROMETHEUS_ENABLED=true`. The exporter is off by default, guards missing dependencies, and exposes CPU/memory gauges keyed by run id.
+- Created a dedicated monitoring CI workflow (`.github/workflows/monitoring-ci.yml`) that executes the shell regression suite headlessly on pull requests.
+
 ## Developer Tooling
 - Created `tests/test_gui_monitoring_py.sh`, an offscreen Qt regression test that verifies logs are generated and at least one sample is captured for a short-lived Python process.
 - Documented operator guidance in `docs/MONITORING_DASHBOARD.md`, covering sampling behaviour, artefact format, and future enhancements.
 
 ## Validation
-- Test command: `./tests/test_gui_monitoring_py.sh`
-- Result: PASS – log file under `monitor/logs/monitor_run_*.jsonl` contained `start`, `sample`, and `stop` events with a non-zero sample count.
+- Test command: `QT_QPA_PLATFORM=offscreen bash tests/test_monitor_daemon.sh`
+- Test command: `QT_QPA_PLATFORM=offscreen bash tests/test_gui_monitoring_py.sh`
+- Test command: `bash tests/test_alerting.sh`
+- Test command: `bash tests/test_log_rotate.sh`
+- Test command: `bash tests/test_prom_exporter.sh`
+- Result: All monitoring tests PASS. Headless GUI run produced `/monitor/logs/monitor_run_20251113T124526Z_10287.jsonl` with two samples and a summary record. Alerting and log rotation populated JSONL artefacts, and the Prometheus exporter exposed `zencube_cpu_percent`/`zencube_memory_rss_megabytes` metrics for `test-run`.
 
 ## Artefacts
-- Code: `monitor/resource_monitor.py`, `gui/monitor_panel.py`, `zencube/zencube_modern_gui.py`
-- Tests: `tests/test_gui_monitoring_py.sh`
-- Documentation & Logs: `docs/MONITORING_DASHBOARD.md`, `monitor/logs/monitor_run_*.jsonl`
+- Code: `monitor/resource_monitor.py`, `monitor/log_rotate.py`, `monitor/alert_manager.py`, `monitor/prometheus_exporter.py`, `gui/monitor_panel.py`, `gui/_mpl_canvas.py`, `zencube/zencube_modern_gui.py`
+- Tests: `tests/test_monitor_daemon.sh`, `tests/test_gui_monitoring_py.sh`, `tests/test_alerting.sh`, `tests/test_log_rotate.sh`, `tests/test_prom_exporter.sh`
+- Documentation & Logs: `docs/MONITORING_DASHBOARD.md`, `phase3/TEST_RUNS.md`, `phase3/SCORES.md`, `monitor/logs/monitor_run_*.jsonl`, `monitor/logs/alerts.jsonl`, `monitor/logs/archive/*.gz`
 
