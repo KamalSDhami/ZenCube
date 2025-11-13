@@ -1,36 +1,61 @@
 # MD Read Log
-- [2025-11-12 10:00 UTC] READ: README.md — # ZenCube
-- [2025-11-12 10:01 UTC] READ: README_UPDATE_SUMMARY.md — # README Update - October 13, 2025
-- [2025-11-12 10:02 UTC] READ: docs/README.md — # ZenCube Team Documentation - README
-- [2025-11-12 10:03 UTC] READ: docs/PROJECT_OVERVIEW.md — # ZenCube Project - Complete Technical Overview
-- [2025-11-12 10:04 UTC] READ: docs/QA_PREPARATION.md — # ZenCube Q&A Preparation Guide
-- [2025-11-12 10:05 UTC] READ: docs/ROLE_1_CORE_SANDBOX.md — # ROLE 1: Core Sandbox Developer (C Programming & System Calls)
-- [2025-11-12 10:06 UTC] READ: docs/ROLE_2_GUI_FRONTEND.md — # ROLE 2: GUI Frontend Developer (PySide6 & User Interface)
-- [2025-11-12 10:07 UTC] READ: docs/ROLE_3_INTEGRATION.md — # ROLE 3: Integration Engineer (Python-C Bridge & Process Management)
-- [2025-11-12 10:08 UTC] READ: docs/ROLE_4_TESTING.md — # ROLE 4: Testing & Quality Assurance Engineer
-- [2025-11-12 10:09 UTC] READ: BUGFIX_LAYOUT_ISSUES.md — # ZenCube GUI - Layout Fixes (October 13, 2025)
-- [2025-11-12 10:10 UTC] READ: BUGFIX_LINUX_PATHS.md — (empty file)
-- [2025-11-12 10:11 UTC] READ: BUGFIX_PATH_CONVERSION.md — # Bug Fix: Windows Path to WSL Path Conversion
-- [2025-11-12 10:12 UTC] READ: CROSS_PLATFORM_SUPPORT.md — # Cross-Platform Support - WSL Toggle Feature
-- [2025-11-12 10:13 UTC] READ: GUI_IMPLEMENTATION.md — # ZenCube GUI Implementation - Complete
-- [2025-11-12 10:14 UTC] READ: GUI_USAGE.md — # ZenCube GUI - User Guide
-- [2025-11-12 10:15 UTC] READ: LINUX_TROUBLESHOOTING.md — # Linux Troubleshooting Guide - ZenCube GUI
-- [2025-11-12 10:16 UTC] READ: MODERN_GUI_DOCUMENTATION.md — # ZenCube Modern GUI - PySide6 Implementation
-- [2025-11-12 10:17 UTC] READ: RESPONSIVE_FEATURES.md — # ZenCube GUI - Responsive Features & Terminal Toggle
-- [2025-11-12 10:18 UTC] READ: zencube/README.md — # ZenCube
-- [2025-11-12 10:19 UTC] READ: zencube/QUICKSTART.md — # ZenCube - Quick Reference Guide
-- [2025-11-12 10:20 UTC] READ: zencube/PHASE2_COMPLETE.md — # ZenCube Phase 2 - Completion Summary
-- [2025-11-12 10:21 UTC] READ: zencube/TEST_RESULTS.md — # ZenCube Test Results Summary
-- [2025-11-12 10:22 UTC] READ: zencube/TESTING_CHECKLIST.md — # ZenCube Testing Checklist
-- [2025-11-12 11:30 UTC] READ: README.md — Project summary covering sandbox features, GUIs, docs, and roadmap.
-- [2025-11-12 11:32 UTC] READ: docs/README.md — Index of team documentation outlining roles, preparation guides, and presentation flow.
-- [2025-11-12 11:34 UTC] READ: docs/PROJECT_OVERVIEW.md — System-wide architecture overview covering sandbox layers, flows, and roadmap items.
-- [2025-11-12 11:36 UTC] READ: docs/ROLE_2_GUI_FRONTEND.md — Detailed breakdown of PySide6 GUI architecture, components, threading, and demo guidance.
-- [2025-11-12 11:38 UTC] READ: docs/ROLE_3_INTEGRATION.md — Integration bridge details covering command assembly, threading, WSL handling, and process lifecycle.
-- [2025-11-12 11:40 UTC] READ: phase3/FINAL_REPORT.md — Backend jail summary: chroot flag, wrapper, scripts, validation notes.
-- [2025-11-12 11:41 UTC] READ: phase3/NOTES.md — Dev-safe jail notes on wrapper behavior, allowlist, and pending follow-ups.
-- [2025-11-12 11:42 UTC] READ: phase3/PHASE3_MASTER_CHECKLIST.md — Checklist showing completed File Restriction and remaining hardening items.
-- [2025-11-12 11:43 UTC] READ: phase3/SCORES.md — Score table logging File System Restriction task outcome.
-- [2025-11-12 11:44 UTC] READ: phase3/TEST_RUNS.md — Test run log capturing dev wrapper validation pass details.
-- [2025-11-12 11:45 UTC] READ: .github/copilot-instructions.md — (empty file)
-- [2025-11-12 12:00 UTC] READ: docs/GUI_FILE_JAIL.md — Summary of GUI panel UI, API interactions, safety guidance.
+- [2025-11-12 10:00 UTC] READ: README.md - # ZenCube
+- [2025-11-12 10:01 UTC] READ: README_UPDATE_SUMMARY.md - # README Update - October 13, 2025
+- [2025-11-12 10:02 UTC] READ: docs/README.md - # ZenCube Team Documentation - README
+- [2025-11-12 10:03 UTC] READ: docs/PROJECT_OVERVIEW.md - # ZenCube Project - Complete Technical Overview
+- [2025-11-12 10:04 UTC] READ: docs/QA_PREPARATION.md - # ZenCube Q&A Preparation Guide
+- [2025-11-12 10:05 UTC] READ: docs/ROLE_1_CORE_SANDBOX.md - # ROLE 1: Core Sandbox Developer (C Programming & System Calls)
+- [2025-11-12 10:06 UTC] READ: docs/ROLE_2_GUI_FRONTEND.md - # ROLE 2: GUI Frontend Developer (PySide6 & User Interface)
+- [2025-11-12 10:07 UTC] READ: docs/ROLE_3_INTEGRATION.md - # ROLE 3: Integration Engineer (Python-C Bridge & Process Management)
+- [2025-11-12 10:08 UTC] READ: docs/ROLE_4_TESTING.md - # ROLE 4: Testing & Quality Assurance Engineer
+- [2025-11-12 10:09 UTC] READ: BUGFIX_LAYOUT_ISSUES.md - # ZenCube GUI - Layout Fixes (October 13, 2025)
+- [2025-11-12 10:10 UTC] READ: BUGFIX_LINUX_PATHS.md - (empty file)
+- [2025-11-12 10:11 UTC] READ: BUGFIX_PATH_CONVERSION.md - # Bug Fix: Windows Path to WSL Path Conversion
+- [2025-11-12 10:12 UTC] READ: CROSS_PLATFORM_SUPPORT.md - # Cross-Platform Support - WSL Toggle Feature
+- [2025-11-12 10:13 UTC] READ: GUI_IMPLEMENTATION.md - # ZenCube GUI Implementation - Complete
+- [2025-11-12 10:14 UTC] READ: GUI_USAGE.md - # ZenCube GUI - User Guide
+- [2025-11-12 10:15 UTC] READ: LINUX_TROUBLESHOOTING.md - # Linux Troubleshooting Guide - ZenCube GUI
+- [2025-11-12 10:16 UTC] READ: MODERN_GUI_DOCUMENTATION.md - # ZenCube Modern GUI - PySide6 Implementation
+- [2025-11-12 10:17 UTC] READ: RESPONSIVE_FEATURES.md - # ZenCube GUI - Responsive Features & Terminal Toggle
+- [2025-11-12 10:18 UTC] READ: zencube/README.md - # ZenCube
+- [2025-11-12 10:19 UTC] READ: zencube/QUICKSTART.md - # ZenCube - Quick Reference Guide
+- [2025-11-12 10:20 UTC] READ: zencube/PHASE2_COMPLETE.md - # ZenCube Phase 2 - Completion Summary
+- [2025-11-12 10:21 UTC] READ: zencube/TEST_RESULTS.md - # ZenCube Test Results Summary
+- [2025-11-12 10:22 UTC] READ: zencube/TESTING_CHECKLIST.md - # ZenCube Testing Checklist
+- [2025-11-12 11:30 UTC] READ: README.md - Project summary covering sandbox features, GUIs, docs, and roadmap.
+- [2025-11-12 11:32 UTC] READ: docs/README.md - Index of team documentation outlining roles, preparation guides, and presentation flow.
+- [2025-11-12 11:34 UTC] READ: docs/PROJECT_OVERVIEW.md - System-wide architecture overview covering sandbox layers, flows, and roadmap items.
+- [2025-11-12 11:36 UTC] READ: docs/ROLE_2_GUI_FRONTEND.md - Detailed breakdown of PySide6 GUI architecture, components, threading, and demo guidance.
+- [2025-11-12 11:38 UTC] READ: docs/ROLE_3_INTEGRATION.md - Integration bridge details covering command assembly, threading, WSL handling, and process lifecycle.
+- [2025-11-12 11:40 UTC] READ: phase3/FINAL_REPORT.md - Backend jail summary: chroot flag, wrapper, scripts, validation notes.
+- [2025-11-12 11:41 UTC] READ: phase3/NOTES.md - Dev-safe jail notes on wrapper behavior, allowlist, and pending follow-ups.
+- [2025-11-12 11:42 UTC] READ: phase3/PHASE3_MASTER_CHECKLIST.md - Checklist showing completed File Restriction and remaining hardening items.
+- [2025-11-12 11:43 UTC] READ: phase3/SCORES.md - Score table logging File System Restriction task outcome.
+- [2025-11-12 11:44 UTC] READ: phase3/TEST_RUNS.md - Test run log capturing dev wrapper validation pass details.
+- [2025-11-12 11:45 UTC] READ: .github/copilot-instructions.md - (empty file)
+- [2025-11-12 12:00 UTC] READ: docs/GUI_FILE_JAIL.md - Summary of GUI panel UI, API interactions, safety guidance.
+- [2025-11-12 12:20 UTC] READ: docs/README.md - Documentation index covering role guides and preparation flow.
+- [2025-11-12 12:22 UTC] READ: docs/PROJECT_OVERVIEW.md - End-to-end architecture, component breakdown, and future roadmap.
+- [2025-11-12 12:30 UTC] READ: docs/MONITORING_DASHBOARD.md - Monitoring dashboard overview for Task C implementation details.
+- [2025-11-13 03:20 UTC] READ: README.md - Refreshed understanding of project structure, features, and roadmap before Phase 3 work.
+- [2025-11-13 03:22 UTC] READ: docs/MONITORING_DASHBOARD.md - Reviewed existing monitoring panel behavior, sampling flow, and planned enhancements.
+- [2025-11-13 03:24 UTC] READ: phase3/FINAL_REPORT.md - Revisited Task A–C summaries with focus on monitoring deliverables and lessons learned.
+- [2025-11-13 03:25 UTC] READ: phase3/NOTES.md - Checked outstanding jail integration notes and follow-up items relevant to monitoring.
+- [2025-11-13 03:26 UTC] READ: phase3/PHASE3_MASTER_CHECKLIST.md - Confirmed checklist status prior to implementing new enhancements.
+- [2025-11-13 03:27 UTC] READ: phase3/SCORES.md - Reviewed scoring context for completed tasks to align expectations.
+- [2025-11-13 03:28 UTC] READ: phase3/TEST_RUNS.md - Looked up latest monitoring test log entry to baseline future validation steps.
+- [2025-11-13 03:30 UTC] READ: docs/README.md — Revisited documentation index to map role guides and monitoring references before enhancements.
+- [2025-11-13 03:31 UTC] READ: docs/PROJECT_OVERVIEW.md — Reviewed end-to-end architecture and current roadmap to align monitoring scope.
+- [2025-11-13 03:32 UTC] READ: docs/ROLE_1_CORE_SANDBOX.md — Refreshed sandbox internals for context on resource metrics feeding the dashboard.
+- [2025-11-13 03:33 UTC] READ: docs/ROLE_2_GUI_FRONTEND.md — Confirmed PySide6 component patterns to extend monitor panel cleanly.
+- [2025-11-13 03:34 UTC] READ: docs/ROLE_3_INTEGRATION.md — Rechecked command execution flow for integrating rotation and exporter hooks.
+- [2025-11-13 03:35 UTC] READ: docs/ROLE_4_TESTING.md — Surveyed testing strategy to plan new alerting and rotation regressions.
+- [2025-11-13 03:36 UTC] READ: docs/QA_PREPARATION.md — Noted likely mentor questions covering monitoring architecture and safety.
+- [2025-11-13 03:37 UTC] READ: docs/GUI_FILE_JAIL.md — Verified prior Phase 3 GUI conventions for consistency with new monitoring widgets.
+- [2025-11-13 03:38 UTC] READ: docs/NETWORK_RESTRICTIONS.md — Recalled Task B network safeguards to coordinate alerting narratives.
+- [2025-11-13 03:39 UTC] READ: GUI_IMPLEMENTATION.md — Recollected legacy GUI build decisions relevant for documentation updates.
+- [2025-11-13 03:40 UTC] READ: GUI_USAGE.md — Gathered user-facing terminology to mirror in monitoring instructions.
+- [2025-11-13 03:41 UTC] READ: MODERN_GUI_DOCUMENTATION.md — Reviewed modern GUI architecture to embed charts without breaking styling.
+- [2025-11-13 03:42 UTC] READ: RESPONSIVE_FEATURES.md — Ensured new controls honor existing responsive layout expectations.
+- [2025-11-13 03:43 UTC] READ: CROSS_PLATFORM_SUPPORT.md — Confirmed WSL/native handling considerations for exporter and rotation commands.
+
