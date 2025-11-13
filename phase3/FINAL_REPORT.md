@@ -52,3 +52,23 @@
 - Scripts & Tests: `scripts/disable_network_dev.sh`, `tests/test_network_restrict.sh`
 - Documentation & Logs: `docs/NETWORK_RESTRICTIONS.md`, `phase3/NOTES.md`, `phase3/TEST_RUNS.md`, `monitor/logs/net_restrict_*.json`
 
+# Task C – Monitoring & Dashboard Report
+
+## Overview
+- Added a reusable sampler in `monitor/resource_monitor.py` that collects CPU, RSS memory, open file counts, and IO bytes for a target PID. The helper prefers `psutil` when installed and automatically falls back to `/proc` parsing, keeping development environments dependency-light.
+- Extended the PySide6 application with a "Monitoring & Metrics" card (`gui/monitor_panel.py`) that can be armed for any execution. When enabled the panel streams live samples, highlights peaks, and provides a direct link to the JSONL log.
+- Updated `CommandExecutor` to emit the sandbox PID on launch and taught `zencube_modern_gui.py` to wire the lifecycle events (start/finish/close) so monitoring is automatic and cleans up correctly.
+
+## Developer Tooling
+- Created `tests/test_gui_monitoring_py.sh`, an offscreen Qt regression test that verifies logs are generated and at least one sample is captured for a short-lived Python process.
+- Documented operator guidance in `docs/MONITORING_DASHBOARD.md`, covering sampling behaviour, artefact format, and future enhancements.
+
+## Validation
+- Test command: `./tests/test_gui_monitoring_py.sh`
+- Result: PASS – log file under `monitor/logs/monitor_run_*.jsonl` contained `start`, `sample`, and `stop` events with a non-zero sample count.
+
+## Artefacts
+- Code: `monitor/resource_monitor.py`, `gui/monitor_panel.py`, `zencube/zencube_modern_gui.py`
+- Tests: `tests/test_gui_monitoring_py.sh`
+- Documentation & Logs: `docs/MONITORING_DASHBOARD.md`, `monitor/logs/monitor_run_*.jsonl`
+

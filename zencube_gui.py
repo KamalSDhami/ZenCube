@@ -1,33 +1,20 @@
-#!/usr/bin/env python3#!/usr/bin/env python3
+#!/usr/bin/env python3
+"""
+ZenCube GUI - Graphical User Interface for ZenCube Sandbox
 
-""""""
-
-ZenCube GUI - Graphical User Interface for ZenCube SandboxZenCube GUI - Graphical User Interface for ZenCube Sandbox
-
-Author: Kamal Singh DhamiAuthor: Kamal Singh Dhami
-
-Date: October 13, 2025Date: October 12, 2025
-
-Version: 1.2 (Cross-Platform)Description: Modern GUI for executing commands in ZenCube sandbox with resource limits
-
-Description: Modern GUI for executing commands in ZenCube sandbox with resource limits"""
-
+Author: Kamal Singh Dhami
+Date: October 13, 2025
+Version: 1.2 (Cross-Platform)
+Description: Modern GUI for executing commands in ZenCube sandbox with resource limits
 """
 
 import tkinter as tk
-
-import tkinter as tkfrom tkinter import ttk, filedialog, messagebox, scrolledtext
-
-from tkinter import ttk, filedialog, messagebox, scrolledtextimport subprocess
-
-import subprocessimport threading
-
-import threadingimport os
-
-import osimport sys
-
-import sysfrom pathlib import Path
-
+from tkinter import ttk, filedialog, messagebox, scrolledtext
+import subprocess
+import threading
+import os
+import sys
+from pathlib import Path
 import platform
 
 from pathlib import Pathclass ZenCubeGUI:

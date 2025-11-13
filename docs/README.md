@@ -117,6 +117,16 @@ Welcome to the ZenCube project documentation! This folder contains comprehensive
 
 ---
 
+### 7. **MONITORING_DASHBOARD.md** - Monitoring & Metrics Panel
+📈 **Native dashboard for Task C**
+- Sampling monitor overview
+- JSONL artefacts format
+- GUI workflow and integration notes
+- Testing instructions for the offscreen regression script
+- Future enhancements roadmap
+
+---
+
 ## 🎯 How to Use This Documentation
 
 ### For Individual Study:
