@@ -6,7 +6,7 @@
  * 2. Network Restrictions - Attempts network socket operations
  * 3. Monitoring & Metrics - Generates CPU and memory activity
  * 
- * Compile: gcc -o phase3_test phase3_test.c
+ * Compile: gcc -o phase3_test phase3_test.c -lm
  * Run in GUI: ./tests/phase3_test
  */
 
@@ -19,10 +19,12 @@
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <math.h>
+#include <time.h>
 #include <time.h>
 
-#define TEST_DURATION_SEC 12
-#define ALLOCATION_MB 15
+#define TEST_DURATION_SEC 19
+#define ALLOCATION_MB 30
 
 void print_separator(const char *title) {
     printf("\n");
@@ -111,43 +113,47 @@ void test_monitoring_metrics() {
     // Declare buffers at function scope so they persist across phases
     char *buffers[3] = {NULL, NULL, NULL};
     
-    printf("  [1] Phase 1: Low CPU baseline (2 sec)...\n");
+    printf("  [1] Phase 1: Low CPU baseline (3 sec)...\n");
     time_t start = time(NULL);
     double dummy = 0.0;
     
-    // Phase 1: Low CPU - baseline (2 seconds)
-    while (time(NULL) - start < 2) {
-        for (int i = 0; i < 1000; i++) {
+    // Phase 1: Low CPU - baseline (3 seconds)
+    // Keep CPU very low to establish baseline
+    while (time(NULL) - start < 3) {
+        for (int i = 0; i < 10000; i++) {
             dummy += (double)i * 0.001;
         }
-        usleep(50000); // Sleep 50ms to keep CPU low
+        usleep(100000); // Sleep 100ms to keep CPU very low
     }
     
-    printf("  [2] Phase 2: CPU spike - intensive computation (2 sec)...\n");
+    printf("  [2] Phase 2: CPU spike - intensive computation (4 sec)...\n");
     start = time(NULL);
-    // Phase 2: High CPU spike (2 seconds)
-    while (time(NULL) - start < 2) {
-        for (int i = 0; i < 1000000; i++) {
+    // Phase 2: High CPU spike (4 seconds) - sustained heavy load
+    while (time(NULL) - start < 4) {
+        // Much heavier computation to ensure high CPU usage
+        for (int i = 0; i < 5000000; i++) {
             dummy += (double)i * 1.234567;
             dummy = dummy * 0.9999;
+            dummy = sqrt(fabs(dummy));
         }
     }
     
-    printf("  [3] Phase 3: Memory allocation ramp (3 sec)...\n");
+    printf("  [3] Phase 3: Memory allocation ramp (5 sec)...\n");
     start = time(NULL);
     int phase = 0;
     
-    // Phase 3: Progressive memory allocation (3 seconds)
-    while (time(NULL) - start < 3) {
+    // Phase 3: Progressive memory allocation (5 seconds)
+    // Allocate memory AND do CPU work to keep both metrics active
+    while (time(NULL) - start < 5) {
         int elapsed = (int)(time(NULL) - start);
         
-        // Allocate more memory each second
+        // Allocate more memory each second (up to 30MB total)
         if (elapsed != phase && elapsed < 3) {
             phase = elapsed;
-            size_t alloc_size = (phase + 1) * 5 * 1024 * 1024; // 5MB, 10MB, 15MB
+            size_t alloc_size = (phase + 1) * 10 * 1024 * 1024; // 10MB, 20MB, 30MB
             printf("      📈 Allocating %zu MB (total: %d MB)...\n", 
                    alloc_size / (1024 * 1024), 
-                   (phase + 1) * 5);
+                   (phase + 1) * 10);
             
             buffers[phase] = (char*)malloc(alloc_size);
             if (buffers[phase] != NULL) {
@@ -158,29 +164,33 @@ void test_monitoring_metrics() {
             }
         }
         
-        // Medium CPU activity
-        for (int i = 0; i < 100000; i++) {
+        // Medium CPU activity while memory is allocated
+        for (int i = 0; i < 500000; i++) {
             dummy += (double)i * 0.5;
         }
-        usleep(10000); // Small sleep
+        usleep(20000); // Small sleep (20ms)
     }
     
-    printf("  [4] Phase 4: CPU burst pattern (3 sec)...\n");
+    printf("  [4] Phase 4: CPU burst pattern (4 sec)...\n");
     start = time(NULL);
-    // Phase 4: Alternating CPU bursts (3 seconds)
-    while (time(NULL) - start < 3) {
-        // High CPU burst
-        for (int i = 0; i < 500000; i++) {
+    // Phase 4: Alternating CPU bursts (4 seconds)
+    // More intense bursts with visible peaks
+    while (time(NULL) - start < 4) {
+        // High CPU burst - very intensive
+        for (int i = 0; i < 3000000; i++) {
             dummy += (double)i * 2.5;
+            dummy = sqrt(fabs(dummy)) + 1.0;
         }
         
-        // Low CPU pause
-        usleep(100000); // Sleep 100ms
+        // Medium CPU pause (not sleeping, just less work)
+        for (int i = 0; i < 100000; i++) {
+            dummy += (double)i * 0.1;
+        }
         
         // Access memory to keep it active (touch each allocated buffer)
         for (int p = 0; p < 3; p++) {
             if (buffers[p] != NULL) {
-                size_t buf_size = (p + 1) * 5 * 1024 * 1024; // 5MB, 10MB, 15MB
+                size_t buf_size = (p + 1) * 10 * 1024 * 1024; // 10MB, 20MB, 30MB
                 // Touch memory at intervals (stay within bounds)
                 for (size_t i = 0; i < buf_size && i < 1024 * 1024; i += 8192) {
                     dummy += buffers[p][i];
@@ -189,16 +199,17 @@ void test_monitoring_metrics() {
         }
     }
     
-    printf("  [5] Phase 5: Gradual ramp down (2 sec)...\n");
+    printf("  [5] Phase 5: Gradual ramp down (3 sec)...\n");
     start = time(NULL);
-    // Phase 5: Gradual CPU decrease (2 seconds)
-    int intensity = 1000000;
-    while (time(NULL) - start < 2) {
+    // Phase 5: Gradual CPU decrease (3 seconds)
+    // Start high and gradually decrease
+    int intensity = 3000000;
+    while (time(NULL) - start < 3) {
         for (int i = 0; i < intensity; i++) {
             dummy += (double)i * 0.1;
         }
-        intensity = intensity * 0.8; // Reduce intensity
-        usleep(20000); // 20ms sleep
+        intensity = intensity * 0.7; // Reduce intensity by 30%
+        usleep(50000); // 50ms sleep
     }
     
     printf("\n  [6] Cleaning up...\n");
@@ -210,10 +221,10 @@ void test_monitoring_metrics() {
     }
     
     printf("\n✅ Monitoring test completed\n");
-    printf("   Duration: 12 seconds (5 distinct phases)\n");
+    printf("   Duration: 19 seconds (5 distinct phases)\n");
     printf("   Check the GUI for:\n");
     printf("     - CPU graph: Shows low baseline → spike → medium → bursts → ramp down\n");
-    printf("     - Memory graph: Shows progressive allocation (5MB → 10MB → 15MB)\n");
+    printf("     - Memory graph: Shows progressive allocation (10MB → 20MB → 30MB)\n");
     printf("     - Sample view: Live updates with varying CPU%% and RSS\n");
     printf("     - Summary: Peak values from each phase\n");
 }
@@ -232,17 +243,17 @@ void print_usage() {
     printf("  3. (Optional) Enable File Jail with path: sandbox_jail\n");
     printf("  4. (Optional) Enable 'Disable Network Access'\n");
     printf("  5. Click 'Execute Command'\n");
-    printf("  6. Watch the monitoring graphs for 12 seconds!\n");
+    printf("  6. Watch the monitoring graphs for 19 seconds!\n");
     printf("\n");
     printf("EXPECTED RESULTS:\n");
     printf("  ✅ File Jail: All file access attempts blocked\n");
     printf("  ✅ Network: All socket operations blocked\n");
     printf("  ✅ Monitoring: Graphs show varied CPU and memory patterns\n");
-    printf("     - Phase 1: Low CPU baseline\n");
-    printf("     - Phase 2: High CPU spike\n");
-    printf("     - Phase 3: Progressive memory allocation (5→15 MB)\n");
-    printf("     - Phase 4: CPU burst pattern\n");
-    printf("     - Phase 5: Gradual ramp down\n");
+    printf("     - Phase 1 (3s): Low CPU baseline\n");
+    printf("     - Phase 2 (4s): High CPU spike (sustained)\n");
+    printf("     - Phase 3 (5s): Progressive memory allocation (10→30 MB)\n");
+    printf("     - Phase 4 (4s): CPU burst pattern\n");
+    printf("     - Phase 5 (3s): Gradual ramp down\n");
     printf("  ✅ Log files created in monitor/logs/\n");
     printf("\n");
 }
