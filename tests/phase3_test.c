@@ -108,6 +108,9 @@ void test_monitoring_metrics() {
     printf("Generating varied CPU and memory patterns for visualization...\n");
     printf("Watch the GUI graphs show different activity phases!\n\n");
     
+    // Declare buffers at function scope so they persist across phases
+    char *buffers[3] = {NULL, NULL, NULL};
+    
     printf("  [1] Phase 1: Low CPU baseline (2 sec)...\n");
     time_t start = time(NULL);
     double dummy = 0.0;
@@ -132,7 +135,6 @@ void test_monitoring_metrics() {
     
     printf("  [3] Phase 3: Memory allocation ramp (3 sec)...\n");
     start = time(NULL);
-    char *buffers[3];
     int phase = 0;
     
     // Phase 3: Progressive memory allocation (3 seconds)
@@ -175,10 +177,12 @@ void test_monitoring_metrics() {
         // Low CPU pause
         usleep(100000); // Sleep 100ms
         
-        // Access memory to keep it active
+        // Access memory to keep it active (touch each allocated buffer)
         for (int p = 0; p < 3; p++) {
             if (buffers[p] != NULL) {
-                for (size_t i = 0; i < 1024 * 1024; i += 8192) {
+                size_t buf_size = (p + 1) * 5 * 1024 * 1024; // 5MB, 10MB, 15MB
+                // Touch memory at intervals (stay within bounds)
+                for (size_t i = 0; i < buf_size && i < 1024 * 1024; i += 8192) {
                     dummy += buffers[p][i];
                 }
             }
