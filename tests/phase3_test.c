@@ -21,8 +21,8 @@
 #include <errno.h>
 #include <time.h>
 
-#define TEST_DURATION_SEC 5
-#define ALLOCATION_MB 10
+#define TEST_DURATION_SEC 12
+#define ALLOCATION_MB 15
 
 void print_separator(const char *title) {
     printf("\n");
@@ -105,59 +105,113 @@ void test_network_restrictions() {
 void test_monitoring_metrics() {
     print_separator("TEST 3: Monitoring & Metrics (Resource Usage)");
     
-    printf("Generating CPU and memory activity for %d seconds...\n", TEST_DURATION_SEC);
-    printf("Watch the GUI graphs populate in real-time!\n\n");
+    printf("Generating varied CPU and memory patterns for visualization...\n");
+    printf("Watch the GUI graphs show different activity phases!\n\n");
     
-    // Allocate memory
-    size_t alloc_size = ALLOCATION_MB * 1024 * 1024;
-    printf("  [1] Allocating %d MB of memory...\n", ALLOCATION_MB);
-    char *buffer = (char*)malloc(alloc_size);
-    if (buffer == NULL) {
-        printf("      ❌ Memory allocation failed\n");
-        return;
-    }
-    
-    // Fill memory to ensure it's actually used
-    printf("  [2] Writing to allocated memory...\n");
-    for (size_t i = 0; i < alloc_size; i += 4096) {
-        buffer[i] = (char)(i & 0xFF);
-    }
-    
-    printf("  [3] Generating CPU load...\n");
+    printf("  [1] Phase 1: Low CPU baseline (2 sec)...\n");
     time_t start = time(NULL);
-    unsigned long long counter = 0;
     double dummy = 0.0;
     
-    while (time(NULL) - start < TEST_DURATION_SEC) {
-        // CPU-intensive computation
-        for (int i = 0; i < 100000; i++) {
+    // Phase 1: Low CPU - baseline (2 seconds)
+    while (time(NULL) - start < 2) {
+        for (int i = 0; i < 1000; i++) {
+            dummy += (double)i * 0.001;
+        }
+        usleep(50000); // Sleep 50ms to keep CPU low
+    }
+    
+    printf("  [2] Phase 2: CPU spike - intensive computation (2 sec)...\n");
+    start = time(NULL);
+    // Phase 2: High CPU spike (2 seconds)
+    while (time(NULL) - start < 2) {
+        for (int i = 0; i < 1000000; i++) {
             dummy += (double)i * 1.234567;
-            counter++;
-        }
-        
-        // Read from memory to keep it active
-        for (size_t i = 0; i < alloc_size; i += 8192) {
-            dummy += buffer[i];
-        }
-        
-        // Progress indicator
-        if (counter % 1000000 == 0) {
-            int elapsed = (int)(time(NULL) - start);
-            printf("      ⏱️  Elapsed: %d/%d seconds (iterations: %llu)\n", 
-                   elapsed, TEST_DURATION_SEC, counter);
+            dummy = dummy * 0.9999;
         }
     }
     
-    printf("\n  [4] Cleaning up...\n");
-    free(buffer);
+    printf("  [3] Phase 3: Memory allocation ramp (3 sec)...\n");
+    start = time(NULL);
+    char *buffers[3];
+    int phase = 0;
+    
+    // Phase 3: Progressive memory allocation (3 seconds)
+    while (time(NULL) - start < 3) {
+        int elapsed = (int)(time(NULL) - start);
+        
+        // Allocate more memory each second
+        if (elapsed != phase && elapsed < 3) {
+            phase = elapsed;
+            size_t alloc_size = (phase + 1) * 5 * 1024 * 1024; // 5MB, 10MB, 15MB
+            printf("      📈 Allocating %zu MB (total: %d MB)...\n", 
+                   alloc_size / (1024 * 1024), 
+                   (phase + 1) * 5);
+            
+            buffers[phase] = (char*)malloc(alloc_size);
+            if (buffers[phase] != NULL) {
+                // Write to memory to ensure it's counted
+                for (size_t i = 0; i < alloc_size; i += 4096) {
+                    buffers[phase][i] = (char)(i & 0xFF);
+                }
+            }
+        }
+        
+        // Medium CPU activity
+        for (int i = 0; i < 100000; i++) {
+            dummy += (double)i * 0.5;
+        }
+        usleep(10000); // Small sleep
+    }
+    
+    printf("  [4] Phase 4: CPU burst pattern (3 sec)...\n");
+    start = time(NULL);
+    // Phase 4: Alternating CPU bursts (3 seconds)
+    while (time(NULL) - start < 3) {
+        // High CPU burst
+        for (int i = 0; i < 500000; i++) {
+            dummy += (double)i * 2.5;
+        }
+        
+        // Low CPU pause
+        usleep(100000); // Sleep 100ms
+        
+        // Access memory to keep it active
+        for (int p = 0; p < 3; p++) {
+            if (buffers[p] != NULL) {
+                for (size_t i = 0; i < 1024 * 1024; i += 8192) {
+                    dummy += buffers[p][i];
+                }
+            }
+        }
+    }
+    
+    printf("  [5] Phase 5: Gradual ramp down (2 sec)...\n");
+    start = time(NULL);
+    // Phase 5: Gradual CPU decrease (2 seconds)
+    int intensity = 1000000;
+    while (time(NULL) - start < 2) {
+        for (int i = 0; i < intensity; i++) {
+            dummy += (double)i * 0.1;
+        }
+        intensity = intensity * 0.8; // Reduce intensity
+        usleep(20000); // 20ms sleep
+    }
+    
+    printf("\n  [6] Cleaning up...\n");
+    // Free all allocated memory
+    for (int i = 0; i < 3; i++) {
+        if (buffers[i] != NULL) {
+            free(buffers[i]);
+        }
+    }
     
     printf("\n✅ Monitoring test completed\n");
-    printf("   Total iterations: %llu\n", counter);
+    printf("   Duration: 12 seconds (5 distinct phases)\n");
     printf("   Check the GUI for:\n");
-    printf("     - CPU graph showing usage spikes\n");
-    printf("     - Memory graph showing %d+ MB allocation\n", ALLOCATION_MB);
-    printf("     - Sample view with live updates\n");
-    printf("     - Summary with peak CPU%% and memory\n");
+    printf("     - CPU graph: Shows low baseline → spike → medium → bursts → ramp down\n");
+    printf("     - Memory graph: Shows progressive allocation (5MB → 10MB → 15MB)\n");
+    printf("     - Sample view: Live updates with varying CPU%% and RSS\n");
+    printf("     - Summary: Peak values from each phase\n");
 }
 
 void print_usage() {
@@ -170,16 +224,21 @@ void print_usage() {
     printf("\n");
     printf("HOW TO USE IN GUI:\n");
     printf("  1. Enable 'Enable monitoring for executions' checkbox\n");
-    printf("  2. Set command: ./tests/phase3_test\n");
+    printf("  2. Set command: ./tests/phase3_test (or full path)\n");
     printf("  3. (Optional) Enable File Jail with path: sandbox_jail\n");
     printf("  4. (Optional) Enable 'Disable Network Access'\n");
     printf("  5. Click 'Execute Command'\n");
-    printf("  6. Watch the monitoring graphs populate!\n");
+    printf("  6. Watch the monitoring graphs for 12 seconds!\n");
     printf("\n");
     printf("EXPECTED RESULTS:\n");
     printf("  ✅ File Jail: All file access attempts blocked\n");
     printf("  ✅ Network: All socket operations blocked\n");
-    printf("  ✅ Monitoring: Graphs show CPU and memory usage\n");
+    printf("  ✅ Monitoring: Graphs show varied CPU and memory patterns\n");
+    printf("     - Phase 1: Low CPU baseline\n");
+    printf("     - Phase 2: High CPU spike\n");
+    printf("     - Phase 3: Progressive memory allocation (5→15 MB)\n");
+    printf("     - Phase 4: CPU burst pattern\n");
+    printf("     - Phase 5: Gradual ramp down\n");
     printf("  ✅ Log files created in monitor/logs/\n");
     printf("\n");
 }
@@ -199,7 +258,10 @@ int main(int argc, char *argv[]) {
     print_separator("PHASE 3 TEST SUITE COMPLETE");
     printf("\n");
     printf("Check the GUI panels for results:\n");
-    printf("  📊 Monitoring Dashboard: Should show graphs and samples\n");
+    printf("  📊 Monitoring Dashboard: Should show varied graph patterns\n");
+    printf("     - CPU: Low baseline → spike → medium → bursts → ramp down\n");
+    printf("     - Memory: Progressive increase from 5MB to 15MB\n");
+    printf("     - ~12 samples collected over 12 seconds\n");
     printf("  🗂️  File Jail Panel: Check status for violations\n");
     printf("  📡 Network Panel: Check status for blocking attempts\n");
     printf("\n");
