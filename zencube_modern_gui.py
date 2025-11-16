@@ -386,7 +386,7 @@ class ZenCubeModernGUI(QMainWindow):
         self.center_window()
     
     def detect_sandbox_path(self):
-        """Detect sandbox binary path"""
+        """Detect sandbox binary path - returns absolute path"""
         script_dir = os.path.dirname(os.path.abspath(__file__))
         
         possible_paths = [
@@ -402,11 +402,12 @@ class ZenCubeModernGUI(QMainWindow):
             if os.path.exists(full_path) and os.path.isfile(full_path):
                 if platform.system() != "Windows":
                     if os.access(full_path, os.X_OK):
-                        return path
+                        return full_path  # Return absolute path
                 else:
-                    return path
+                    return full_path  # Return absolute path
         
-        return "./sandbox"
+        # Fallback: return absolute path to expected location
+        return os.path.join(script_dir, "sandbox")
     
     def center_window(self):
         """Center window on screen"""
