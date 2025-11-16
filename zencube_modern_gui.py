@@ -33,6 +33,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.append(str(PROJECT_ROOT))
 
 from gui.file_jail_panel import attach_file_jail_panel
+from gui.monitor_panel import attach_monitor_panel
 from gui.network_panel import attach_network_panel
 
 
@@ -319,6 +320,7 @@ class CommandExecutor(QThread):
     """Thread for executing commands"""
     output_received = Signal(str)
     finished_signal = Signal(int)
+    started_signal = Signal(int)
     
     def __init__(self, command_parts, env=None, cwd=None):
         super().__init__()
@@ -339,6 +341,8 @@ class CommandExecutor(QThread):
                 env=self.env,
                 cwd=self.cwd,
             )
+            if self.process.pid:
+                self.started_signal.emit(self.process.pid)
             
             for line in iter(self.process.stdout.readline, ''):
                 if line:
@@ -366,6 +370,7 @@ class ZenCubeModernGUI(QMainWindow):
         self.sandbox_path = self.detect_sandbox_path()
         self.terminal_visible = True  # Track terminal visibility
         self.network_panel = None
+        self.monitor_panel = None
         self._last_raw_command: list[str] = []
         self._last_prepared_command: list[str] = []
         
@@ -480,6 +485,7 @@ class ZenCubeModernGUI(QMainWindow):
         self.create_limits_section(top_layout)
         self.create_file_jail_section(top_layout)
         self.create_network_section(top_layout)
+        self.create_monitor_section(top_layout)
         top_layout.addStretch()
         
         top_scroll.setWidget(top_widget)
@@ -714,6 +720,13 @@ class ZenCubeModernGUI(QMainWindow):
         card = ModernCard("Network Restrictions")
         card.main_layout.setSpacing(12)
         self.network_panel = attach_network_panel(self, card.main_layout)
+        layout.addWidget(card)
+
+    def create_monitor_section(self, layout):
+        """Create the monitoring dashboard panel container."""
+        card = ModernCard("Monitoring & Metrics")
+        card.main_layout.setSpacing(12)
+        self.monitor_panel = attach_monitor_panel(self, card.main_layout)
         layout.addWidget(card)
 
     def create_output_section(self, layout):
@@ -1044,6 +1057,7 @@ class ZenCubeModernGUI(QMainWindow):
             # Execute in thread
             self.executor = CommandExecutor(cmd_parts, env=env, cwd=str(PROJECT_ROOT))
             self.executor.output_received.connect(self.log_output)
+            self.executor.started_signal.connect(self._on_process_started)
             self.executor.finished_signal.connect(self.on_command_finished)
             self.executor.start()
             
@@ -1051,6 +1065,19 @@ class ZenCubeModernGUI(QMainWindow):
             QMessageBox.critical(self, "Error", str(e))
             self.log_output(f"❌ Error: {e}\n", "error")
     
+    def _on_process_started(self, pid: int) -> None:
+        """Attach monitoring once the subprocess PID is available."""
+        if self.monitor_panel and self._last_raw_command:
+            self.monitor_panel.attach_to_process(
+                pid,
+                list(self._last_raw_command),
+                list(self._last_prepared_command),
+            )
+        
+        # Attach network panel for status tracking
+        if self.network_panel:
+            self.network_panel.attach_to_execution(pid)
+
     def stop_execution(self):
         """Stop command execution"""
         if self.executor:
@@ -1060,6 +1087,13 @@ class ZenCubeModernGUI(QMainWindow):
     
     def on_command_finished(self, exit_code):
         """Handle command completion"""
+        if self.monitor_panel:
+            self.monitor_panel.handle_process_finished(exit_code)
+        
+        # Notify network panel that execution finished
+        if self.network_panel:
+            self.network_panel.handle_execution_finished()
+        
         self.execute_btn.setEnabled(True)
         self.stop_btn.setEnabled(False)
         
@@ -1113,6 +1147,11 @@ class ZenCubeModernGUI(QMainWindow):
         cursor.insertHtml(f'<span style="color: {color};">{html_message}</span>')
         self.output_text.setTextCursor(cursor)
         self.output_text.ensureCursorVisible()
+
+    def closeEvent(self, event):  # noqa: D401 - Qt event override
+        if self.monitor_panel:
+            self.monitor_panel.shutdown()
+        super().closeEvent(event)
     
     def clear_output(self):
         """Clear output"""
