@@ -356,8 +356,24 @@ class CommandExecutor(QThread):
             self.finished_signal.emit(-1)
     
     def stop(self):
+        """Stop the running process forcefully"""
         if self.process:
-            self.process.terminate()
+            try:
+                # Try graceful termination first
+                self.process.terminate()
+                # Wait a short time for graceful shutdown
+                try:
+                    self.process.wait(timeout=2)
+                except subprocess.TimeoutExpired:
+                    # Force kill if it doesn't terminate
+                    self.process.kill()
+                    self.process.wait()
+            except Exception as e:
+                # If all else fails, try kill
+                try:
+                    self.process.kill()
+                except:
+                    pass
 
 
 class ZenCubeModernGUI(QMainWindow):
@@ -1027,6 +1043,15 @@ class ZenCubeModernGUI(QMainWindow):
     def execute_command(self):
         """Execute command"""
         try:
+            # Check if already running
+            if self.executor and self.executor.isRunning():
+                QMessageBox.warning(
+                    self, 
+                    "Already Running", 
+                    "A command is already executing. Please stop it first."
+                )
+                return
+            
             # Validate
             command = self.command_input.text().strip()
             if not command:
@@ -1065,6 +1090,9 @@ class ZenCubeModernGUI(QMainWindow):
         except Exception as e:
             QMessageBox.critical(self, "Error", str(e))
             self.log_output(f"❌ Error: {e}\n", "error")
+            # Reset UI on error
+            self.execute_btn.setEnabled(True)
+            self.stop_btn.setEnabled(False)
     
     def _on_process_started(self, pid: int) -> None:
         """Attach monitoring once the subprocess PID is available."""
@@ -1081,13 +1109,46 @@ class ZenCubeModernGUI(QMainWindow):
 
     def stop_execution(self):
         """Stop command execution"""
-        if self.executor:
+        if self.executor and self.executor.isRunning():
+            self.log_output("\n🛑 Stopping execution...\n", "warning")
+            
+            # Stop the executor thread
             self.executor.stop()
-            self.log_output("\n🛑 Stopped by user\n", "warning")
-            self.on_command_finished(-1)
+            
+            # Wait for thread to finish (with timeout)
+            if not self.executor.wait(3000):  # Wait max 3 seconds
+                self.log_output("⚠️ Force terminating...\n", "warning")
+                self.executor.terminate()
+            
+            self.log_output("✅ Execution stopped\n", "info")
+            
+            # Clean up UI state immediately
+            self.execute_btn.setEnabled(True)
+            self.stop_btn.setEnabled(False)
+            
+            # Clean up monitoring panels
+            if self.monitor_panel:
+                self.monitor_panel.handle_process_finished(-1)
+            
+            if self.network_panel:
+                self.network_panel.handle_execution_finished()
+            
+            # Update status bar
+            os_name = platform.system()
+            mode = "WSL Mode" if self.use_wsl else "Native Mode"
+            self.statusBar().showMessage(f"Ready | OS: {os_name} | {mode} | Sandbox: {self.sandbox_path}")
+            
+            # Clear executor reference
+            self.executor = None
+        else:
+            self.log_output("⚠️ No running process to stop\n", "warning")
     
     def on_command_finished(self, exit_code):
         """Handle command completion"""
+        # Only process if we haven't already cleaned up from stop_execution
+        if self.executor is None:
+            return
+        
         if self.monitor_panel:
             self.monitor_panel.handle_process_finished(exit_code)
         
@@ -1100,12 +1161,17 @@ class ZenCubeModernGUI(QMainWindow):
         
         if exit_code == 0:
             self.log_output(f"\n✅ Command completed (exit code: {exit_code})\n", "success")
+        elif exit_code == -1:
+            self.log_output(f"\n🛑 Command was stopped\n", "warning")
         else:
             self.log_output(f"\n⚠️ Command exited with code: {exit_code}\n", "warning")
         
         os_name = platform.system()
         mode = "WSL Mode" if self.use_wsl else "Native Mode"
         self.statusBar().showMessage(f"Ready | OS: {os_name} | {mode} | Sandbox: {self.sandbox_path}")
+        
+        # Clear executor reference
+        self.executor = None
     
     def toggle_terminal(self):
         """Toggle terminal visibility"""
